@@ -1,27 +1,33 @@
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BlockFileLoader;
 
-/**
- * Created by cxa123230 on 10/6/2017.
- */
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+/**
+ * Created by cxa123230 on 10/6/2017.
+ */
 
 public class ChainParser {
     public static void main(String [] args) throws IOException {
+        if (true) {
+            System.out.println("Running this file resets data.");
+            System.exit(1);
+        }
         String dir = "D:\\Bitcoin\\blocks\\";
         Context.getOrCreate(MainNetParams.get());
         NetworkParameters np = new MainNetParams();
         int j=0;
         BufferedWriter wr = new BufferedWriter(new FileWriter("D:\\Bitcoin\\createddata\\txall.txt"));
-        for(int i=0;i<1000;i++){
+        for (int i = 0; i < 5000; i++) {
             String fName ="";
             if(i<10)  fName = "0000"; else if(i<100) fName ="000"; else fName = "00";
             String pathname = dir + "blk" + fName+i+".dat";

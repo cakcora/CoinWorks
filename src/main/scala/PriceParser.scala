@@ -16,12 +16,13 @@ object PriceParser {
     val ldir = "D:\\Litecoin\\BlocksFromApi\\"
     val bdir = "D:\\Bitcoin\\BlocksFromApi\\"
 
-    var sleeptime = 200
+    var sleeptime = 100
 
 
-    if(false)
-    startBitCoinDownload("0000000000000000001eb6d2dc29a3d0cca42cb704ad5815cec73a83b1d694d9",bdir,sleeptime)
 
+    startBitCoinDownload("000000000000000000d1d8609b5624cbbdc3aa91f375dc27d7b238facf96a5fd", bdir, sleeptime)
+
+    if (false)
     startLiteCoinDownload(1290340,ldir,sleeptime)
 
   }
@@ -45,6 +46,29 @@ object PriceParser {
       Thread.sleep(sleeptime)
     }
   }
+
+  def getLiteCoinBlock(dir: String, blockNo: Long): Long = {
+    try {
+      val add = "http://chain.so/api/v2/block/LTC/"
+      println(add + blockNo)
+      val content = get(add + blockNo)
+
+      new PrintWriter(dir + blockNo + ".json") {
+        write(content)
+        close()
+      }
+      val prev_block = blockNo - 1L
+      prev_block
+    } catch {
+      case e: Exception => {
+        println(e.toString); -1
+      }
+      case ioe: IOException => -1
+      case ste: SocketTimeoutException => -1
+    }
+
+  }
+
   def startBitCoinDownload(block:String,dir:String,sleep:Long): Unit = {
     var i =0;
     var sleeptime = sleep
@@ -64,25 +88,6 @@ object PriceParser {
       }
       Thread.sleep(sleeptime)
     }
-  }
-  def getLiteCoinBlock(dir: String, blockNo: Long): Long = {
-    try {
-      val add = "http://chain.so/api/v2/block/LTC/"
-      println(add+ blockNo)
-      val content = get( add+ blockNo)
-
-      new PrintWriter(dir + blockNo + ".json") {
-        write(content)
-        close()
-      }
-      val prev_block = blockNo-1L
-      prev_block
-    } catch {
-      case e:Exception =>{println(e.toString); -1}
-      case ioe: IOException => -1
-      case ste: SocketTimeoutException => -1
-    }
-
   }
 
   def getBitCoinBlock(dir: String, blockHash: String): String = {
@@ -113,7 +118,7 @@ object PriceParser {
           readTimeout: Int = 5000,
           requestMethod: String = "GET") =
   {
-    import java.net.{URL, HttpURLConnection}
+    import java.net.{HttpURLConnection, URL}
     val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
     connection.setConnectTimeout(connectTimeout)
     connection.setReadTimeout(readTimeout)
