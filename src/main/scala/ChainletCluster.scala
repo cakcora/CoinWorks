@@ -3,23 +3,23 @@ import scala.collection.mutable.ListBuffer
 /**
   * Created by cxa123230 on 10/7/2017.
   */
-class ChainletCluster(id: Int, s: Array[Long]) {
-  val members = ListBuffer(s)
-  val mergeids = ListBuffer(con(id))
+class ChainletCluster(thisId: Int, thisVector: Array[Long]) {
+  val chainletVectors = ListBuffer(thisVector)
+  val mergedChainletIds = ListBuffer(thisId)
 
-  def getIds(): Set[String] = mergeids.toSet
-
-  def add(i: Int, c: Array[Long]) {
-    mergeids.append(con(i)); members.append(c)
+  def addId(chainletId: Int) = {
+    mergedChainletIds.append(chainletId);
   }
 
-  def con(i: Int): String = {
-    (1 + (i / 20)) + ":" + i % 20
-    i + ""
+  def getMemberIds(): Set[Int] = mergedChainletIds.toSet
+
+  def add(vector: Array[Long]) {
+    chainletVectors.append(vector)
   }
 
-  def getMembers = {
-    members.toList
+
+  def getMemberVectors = {
+    chainletVectors.toList
   }
 
 }

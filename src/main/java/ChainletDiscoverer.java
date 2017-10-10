@@ -22,6 +22,7 @@ public class ChainletDiscoverer {
             for (int timePeriod = 1; timePeriod <= timePeriodMax; timePeriod++) {
                 int dim = 20;
                 int[][] occM = new int[dim][dim];
+
                 String fileName = dir + year + "_" + timePeriod + ".txt";
                 File f = new File(fileName);
                 if (!f.exists()) {
@@ -71,7 +72,10 @@ public class ChainletDiscoverer {
         else {
             throw new RuntimeException("time period is unknown. Should be day or week.");
         }
-        BufferedWriter wr = new BufferedWriter(new FileWriter(dir + file + year + x + timePeriod + ".csv"));
+        String updatedFileName = timePeriod + "";
+        if (updatedFileName.length() == 1) updatedFileName = "00" + updatedFileName;
+        else if (updatedFileName.length() == 2) updatedFileName = "0" + updatedFileName;
+        BufferedWriter wr = new BufferedWriter(new FileWriter(dir + file + year + x + updatedFileName + ".csv"));
         StringBuffer bf = new StringBuffer();
         for (int i = 0; i < occ.length; i++) {
             for (int j = 0; j < occ.length - 1; j++) {

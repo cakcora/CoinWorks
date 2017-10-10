@@ -1,4 +1,4 @@
-import java.io.File
+import java.io.{BufferedWriter, File, FileWriter}
 
 import scala.collection.mutable
 import scala.io.Source
@@ -12,7 +12,7 @@ object CClusterer {
   def main(args: Array[String]): Unit = {
     val crdir: String = "D:\\Bitcoin\\createddata\\dailyOccMatrices\\"
     val startYear: Int = 2009
-    val records = Array.ofDim[Long](400, (2017 - startYear + 1) * 365)
+    val vectors = Array.ofDim[Long](400, (2017 - startYear + 1) * timePeriodMax)
     var currentTimePeriod = 0
     for (year: Int <- startYear to 2017 by 1) {
       for (timePeriod <- 1 to timePeriodMax by 1) {
@@ -25,7 +25,7 @@ object CClusterer {
           for (line <- lines) {
             val arr = line.split(",")
             for (c <- arr) {
-              records(currentChainlet)(currentTimePeriod) = c.toLong
+              vectors(currentChainlet)(currentTimePeriod) = c.toLong
               //              println(currentChainlet+" "+currentTimePeriod+" "+c.toInt)
               currentChainlet += 1
             }
@@ -39,25 +39,25 @@ object CClusterer {
     }
 
 
-    //    var maxSim =0.0
-    //    var cand = -1
-    //    for(r<-0 to records.length-1){
-    //        for(r2<-r+1 to records.length-1){
-    //          val similarity = CosineSim.cosineSimilarity(records(r),records(r2))
-    //          if(similarity>maxSim){
-    //            maxSim=similarity
-    //            cand = -1
-    //          }
-    //        }
-    //    }
-    val clusters = mutable.HashMap.empty[Int, ChainletCluster]
-    for (r <- 0 to records.length - 1) {
-      clusters(r) = new ChainletCluster(r, records(r))
+
+    val writevectors: Boolean = true
+    if (writevectors) {
+      val wr = new BufferedWriter(new FileWriter(crdir + "dailyvectors.txt")) //weeklyvectors
+      vectors.foreach { case (e) =>
+        wr.append(e.mkString("\t"))
+        wr.append("\r\n")
+      }
+      wr.close()
     }
+    val clusters = mutable.HashMap.empty[Int, ChainletCluster]
+    for (chainletId <- 0 to vectors.length - 1) {
+      clusters(chainletId) = new ChainletCluster(chainletId, vectors(chainletId))
+    }
+
+
     var s = 0
-    val sims = Array.ofDim[Double](400, 400)
-    val bf = new StringBuffer()
-    while (clusters.size != 1) {
+    val sims = Array.ofDim[Double](vectors.length, vectors.length)
+    while (clusters.size > 1) {
       s += 1
       println("step " + s)
       var maxSim = -1.0
@@ -72,8 +72,8 @@ object CClusterer {
             var i = 0
             if (sims(cc1)(cc2) == 0 || sims(cc1)(cc2) == -1) {
               //              println("computing "+cc1+" "+cc2)
-              for (m1 <- c1.getMembers) {
-                for (m2 <- c2.getMembers) {
+              for (m1 <- c1.getMemberVectors) {
+                for (m2 <- c2.getMemberVectors) {
                   avgSim += CosineSim.cosineSimilarity(m1, m2)
                   i += 1
                 }
@@ -95,7 +95,11 @@ object CClusterer {
       if (maxSim < 0.7) {
 
         for (key <- clusters.keySet) {
-          println(clusters(key).getIds().mkString(","))
+          val d = clusters(key).getMemberIds()
+          for (a <- d) {
+            print((1 + (a / 20)) + ":" + (1 + a % 20) + ",")
+          }
+          println()
         }
         println(clusters.size + " clusters")
         System.exit(1)
@@ -106,8 +110,11 @@ object CClusterer {
         sims(merge1)(k) = -1
 
       }
-      for (member <- cluster2.getMembers) {
-        cluster1.add(merge2, member)
+      for (chainletVector <- cluster2.getMemberVectors) {
+        cluster1.add(chainletVector)
+      }
+      for (chainletId <- cluster2.getMemberIds()) {
+        cluster1.addId(chainletId)
       }
       clusters(merge1) = cluster1
       println("(" + merge1 + "," + merge2 + "):" + maxSim + " remaining " + clusters.size)

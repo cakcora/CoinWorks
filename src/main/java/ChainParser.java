@@ -18,15 +18,12 @@ import java.util.List;
 
 public class ChainParser {
     public static void main(String [] args) throws IOException {
-        if (true) {
-            System.out.println("Running this file resets data.");
-            System.exit(1);
-        }
+
         String dir = "D:\\Bitcoin\\blocks\\";
         Context.getOrCreate(MainNetParams.get());
         NetworkParameters np = new MainNetParams();
         int j=0;
-        BufferedWriter wr = new BufferedWriter(new FileWriter("D:\\Bitcoin\\createddata\\txall.txt"));
+        BufferedWriter wr = new BufferedWriter(new FileWriter("D:\\Bitcoin\\createddata\\txSums.txt"));//txall
         for (int i = 0; i < 5000; i++) {
             String fName ="";
             if(i<10)  fName = "0000"; else if(i<100) fName ="000"; else fName = "00";
@@ -42,10 +39,12 @@ public class ChainParser {
                 for (Block block : bfl) {
                     if(++j%10000==0) System.out.println(j);
                     for(Transaction tx :block.getTransactions()){
-                        int inputs = tx.getInputs().size();
-                        int outputs = tx.getOutputs().size();
+//                        int inputs = tx.getInputs().size();
+//                        int outputs = tx.getOutputs().size();
+                        long sum = tx.getOutputSum().getValue();
 
-                        bf.append(tx.getHashAsString()+"\t"+block.getTimeSeconds()+"\t"+inputs+"\t"+outputs+"\r\n");
+                        bf.append(tx.getHashAsString() + "\t" + block.getTimeSeconds() + "\t" + sum + "\r\n");
+                        //bf.append(tx.getHashAsString()+"\t"+block.getTimeSeconds()+"\t"+sum+"\t"+inputs+"\t"+outputs+"\r\n");
 
                     }
                 }
