@@ -10,21 +10,26 @@ object CClusterer {
   val timePeriodMax: Int = 365
 
   def main(args: Array[String]): Unit = {
-    val crdir: String = "D:\\Bitcoin\\createddata\\dailyOccMatrices\\"
 
+    val crdir: String = "D:\\Bitcoin\\createddata\\dailyOccMatrices\\"
     val startYear: Int = 2009
-    val vectors = Array.ofDim[Long](400, (2017 - startYear + 1) * timePeriodMax)
+    val completedClustering: Int = 200
+    val numTimePeriods: Int = (2017 - startYear + 1) * timePeriodMax
+    val numChainlets: Int = 400
+    val vectors = Array.ofDim[Long](numChainlets, numTimePeriods)
+
+    val timIds = Array.ofDim[String](numTimePeriods)
     var currentTimePeriod = 0
     for (year: Int <- startYear to 2017 by 1) {
       for (timePeriod <- 1 to timePeriodMax by 1) {
-
+        timIds(currentTimePeriod) = (year + ":" + timePeriod)
         var updatedFileName: String = if (timePeriodMax == 52) timePeriod + "" else timePeriod + ""
         if (updatedFileName.length == 1) updatedFileName = "00" + updatedFileName
         else if (updatedFileName.length == 2) updatedFileName = "0" + updatedFileName
 
         val fileName: String = crdir + "occ" + year + "day" + updatedFileName + ".csv"
-        val f: File = new File(fileName)
 
+        val f: File = new File(fileName)
         if (f.exists) {
           val lines = Source.fromFile(fileName).getLines().toList
           var currentChainlet = 0;
@@ -46,13 +51,14 @@ object CClusterer {
 
 
 
-    val wr = new BufferedWriter(new FileWriter(crdir + "DailyVectors.txt")) //weeklyvectors
+    val wr = new BufferedWriter(new FileWriter(crdir + "DailyVectors.txt")) //or use weeklyvectors
+    wr.append(timIds.mkString("\t") + "\r\n")
     for (key <- 0 to vectors.length - 1) {
       val clus = vectors(key)
       wr.append(clus.mkString("\t") + "\r\n")
     }
     wr.close()
-    System.exit(1)
+    //System.exit(1)
     val clusters = mutable.HashMap.empty[Int, ChainletCluster]
     for (chainletId <- 0 to vectors.length - 1) {
       clusters(chainletId) = new ChainletCluster(chainletId, vectors(chainletId))
@@ -100,9 +106,9 @@ object CClusterer {
 
         val wr = new BufferedWriter(new FileWriter(crdir + "DailyClusters.txt")) //weeklyvectors
         for (key <- clusters.keySet.toSeq.sorted) {
+
+
           val clus: ChainletCluster = clusters(key)
-
-
           val d = clus.getMemberIds()
           for (a <- d) {
             wr.append((1 + (a / 20)) + ":" + (1 + a % 20) + ",")
@@ -116,7 +122,8 @@ object CClusterer {
 
 
         for (clusteringMethod <- List("avg", "median", "max")) {
-          val wr = new BufferedWriter(new FileWriter(crdir + clusteringMethod + "ClusteredDailyVectors.txt")) //weeklyvectors
+          val wr = new BufferedWriter(new FileWriter(crdir + clusteringMethod + "ClusteredDailyVectors.txt")) //or use weeklyvectors
+          wr.append(timIds.mkString("\t") + "\r\n")
           for (key <- clusters.keySet.toSeq.sorted) {
             val clus: ChainletCluster = clusters(key)
             val vec = clus.getClusterVector(clusteringMethod)
@@ -126,7 +133,7 @@ object CClusterer {
           }
           wr.close()
         }
-        System.exit(1)
+        System.exit(completedClustering)
       }
       val cluster1 = clusters(merge1)
       val cluster2 = clusters(merge2)
@@ -148,5 +155,6 @@ object CClusterer {
 
 
   }
+
 
 }

@@ -20,7 +20,7 @@ object PriceParser {
 
 
 
-    startBitCoinDownload("000000000000000000d1d8609b5624cbbdc3aa91f375dc27d7b238facf96a5fd", bdir, sleeptime)
+    startBitCoinDownload("00000000000004ed8801515fc23881413591c871f8e7be017f3ab59c92ab0cdf", bdir, sleeptime)
 
     if (false)
     startLiteCoinDownload(1290340,ldir,sleeptime)
@@ -69,6 +69,23 @@ object PriceParser {
 
   }
 
+  @throws(classOf[java.io.IOException])
+  @throws(classOf[java.net.SocketTimeoutException])
+  def get(url: String,
+          connectTimeout: Int = 5000,
+          readTimeout: Int = 5000,
+          requestMethod: String = "GET") = {
+    import java.net.{HttpURLConnection, URL}
+    val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
+    connection.setConnectTimeout(connectTimeout)
+    connection.setReadTimeout(readTimeout)
+    connection.setRequestMethod(requestMethod)
+    val inputStream = connection.getInputStream
+    val content = Source.fromInputStream(inputStream).mkString
+    if (inputStream != null) inputStream.close
+    content
+  }
+
   def startBitCoinDownload(block:String,dir:String,sleep:Long): Unit = {
     var i =0;
     var sleeptime = sleep
@@ -109,23 +126,5 @@ object PriceParser {
       case ste: SocketTimeoutException => "null"
     }
 
-  }
-
-  @throws(classOf[java.io.IOException])
-  @throws(classOf[java.net.SocketTimeoutException])
-  def get(url: String,
-          connectTimeout: Int = 5000,
-          readTimeout: Int = 5000,
-          requestMethod: String = "GET") =
-  {
-    import java.net.{HttpURLConnection, URL}
-    val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
-    connection.setConnectTimeout(connectTimeout)
-    connection.setReadTimeout(readTimeout)
-    connection.setRequestMethod(requestMethod)
-    val inputStream = connection.getInputStream
-    val content = Source.fromInputStream(inputStream).mkString
-    if (inputStream != null) inputStream.close
-    content
   }
 }
