@@ -10,7 +10,7 @@ chainlets <- read.csv("C:/Users/cxa123230/Dropbox/Publications/PostDoc work/Bloc
 #chainlets<-chainlets[chainlets$day%%7==1,]
 chainlets$myx<-paste(chainlets$year,chainlets$day,sep="/ ") 
 
-maxDim <-2 
+maxDim <-20 
 
 matrixChains<-c("totaltx","myx")
 for(x in 1:maxDim){ 
@@ -33,7 +33,20 @@ m13
 
 resultFolder<-"C:/Users/cxa123230/Dropbox/Publications/PostDoc work/Blockchain Survey/R codes and Figures/"
 #ggsave(filename=paste(resultFolder,"matrixJustification.pdf",sep=""),plot=m13,width=5,height=3,unit="in")
-ggsave(filename=paste(resultFolder,"matrixJustification.png",sep=""),plot=m13,width=5,height=3,unit="in")
+#ggsave(filename=paste(resultFolder,"matrixJustification.png",sep=""),plot=m13,width=5,height=3,unit="in")
 
-
- 
+res<-data.frame()
+for(mxChain in 2:19){
+  chChains <- c("totaltx")
+  for(chX in 1:mxChain){
+    for(chY in 1:mxChain){
+      chChains<-c(chChains,paste("X",chX,".",chY,sep=""))
+    }
+  }
+   
+  chD<- subset(chainlets, select=chChains)
+  chD$mSum <-rowSums(chD[,2:length(chD)]) 
+  res<-rbind(res, c(mxChain,median(chD$mSum)/median(chD$totaltx)))
+}
+print(res)
+ plot(res)
