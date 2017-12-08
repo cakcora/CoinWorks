@@ -14,7 +14,7 @@ object ChainSplitterByTimePeriod {
 
   def main(args: Array[String]): Unit = {
     val dir: String = "D:\\Bitcoin\\createddata\\"
-    val oDir = dir + "daily\\"
+    val oDir = dir + "hourly\\"
     FileUtils.cleanDirectory(new File(oDir))
 
     val br = Source.fromFile(dir + "txall.txt").getLines()
@@ -26,8 +26,9 @@ object ChainSplitterByTimePeriod {
       val time: DateTime = new DateTime(1000 * arr(1).toLong)
       val year = time.year().get()
 
-      val timePeriod = time.getDayOfYear();
-      val fileName: String = year + "_" + timePeriod
+      val day = time.getDayOfYear();
+      val hour = time.getHourOfDay();
+      val fileName: String = year + "_" + day + "_"
       if (map.contains(fileName)) {
         map(fileName).append(line + "\r\n")
         if (full(map(fileName))) {
