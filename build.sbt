@@ -10,6 +10,9 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0"
 libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.0.0"
 libraryDependencies += "org.apache.spark" %% "spark-mllib" % "2.0.0"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
+libraryDependencies += "com.google.code.gson" % "gson" % "1.7.1"
+libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.14.5"
+libraryDependencies += "org.bitcoinj" % "bitcoinj-tools" % "0.14.5"
 
 resolvers ++= Seq(
   // other resolvers here
