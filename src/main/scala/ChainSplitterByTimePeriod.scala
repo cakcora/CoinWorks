@@ -2,62 +2,65 @@ import java.io.{BufferedWriter, File, FileWriter}
 
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 /**
   * Created by cxa123230 on 10/7/2017.
+  * Requires parsed transactions data from ChainParser.java
   */
 object ChainSplitterByTimePeriod {
-
+  private val log = LoggerFactory.getLogger(classOf[ChainParser])
   def main(args: Array[String]): Unit = {
-    val dir: String = "D:\\Bitcoin\\createddata\\"
-    val oDir = dir + "hourly\\"
-    FileUtils.cleanDirectory(new File(oDir))
+    val coins = List("Bitcoin", "Litecoin", "Namecoin")
+    for (coin <- coins) {
+      splitData(coin)
+    }
+  }
 
-    val br = Source.fromFile(dir + "txall.txt").getLines()
-    val map = mutable.HashMap.empty[String, ListBuffer[String]]
+  def splitData(coin: String): Unit = {
+    val rootDir: String = "D:\\" + coin + "/createddata/"
+    val dayF = true
+    val outputDir = rootDir + {
+      if (dayF) "daily/" else "hourly/"
+    }
+    val file: File = new File(outputDir)
+    file.mkdirs()
+    FileUtils.cleanDirectory(file)
+
+    val br = Source.fromFile(rootDir + "txAll.txt").getLines()
+    val content = new ListBuffer[String]()
+    var previousFile = "";
     while (br.hasNext) {
       val line: String = br.next()
       val arr = line.split("\t")
 
-      val time: DateTime = new DateTime(1000 * arr(1).toLong)
-      val year = time.year().get()
+      val blockDate: DateTime = new DateTime(1000 * arr(1).toLong)
+      val year = blockDate.getYear()
 
-      val day = time.getDayOfYear();
-      val hour = time.getHourOfDay();
-      val fileName: String = year + "_" + day + "_"
-      if (map.contains(fileName)) {
-        map(fileName).append(line + "\r\n")
-        if (full(map(fileName))) {
-          write(oDir + fileName + ".txt", map(fileName))
-          map(fileName) = new ListBuffer()
+      val day = blockDate.getDayOfYear();
+      val hour = blockDate.getHourOfDay();
+      val currentFile: String = if (dayF) year + "_" + day else year + "_" + day + "_" + hour
+      if (previousFile.equals(currentFile)) {
+        content.append(line + "\r\n")
         }
-      }
-      else map(fileName) = ListBuffer(line + "\r\n")
 
+      else {
+        if (previousFile.length > 1)
+          write(outputDir + previousFile + ".txt", content)
+        content.clear()
+        content.append(line + "\r\n")
+        previousFile = currentFile
+      }
+      }
     }
 
-    for (fileName <- map.keySet) {
-      if (!map(fileName).isEmpty) {
-        write(oDir + fileName + ".txt", map(fileName))
-      }
-    }
-  }
 
-  def full(strings: ListBuffer[String]): Boolean = {
-    if (strings.length > 10000) true
-    else false
-  }
 
   def write(fileName: String, txList: ListBuffer[String]) = {
-    println("writing " + fileName)
-    val wr = new BufferedWriter(new FileWriter(fileName, true))
-    wr.append(txList.mkString(""))
-    wr.close();
+    new BufferedWriter(new FileWriter(fileName, true)).append(txList.mkString("")).close()
   }
-
 
 }
