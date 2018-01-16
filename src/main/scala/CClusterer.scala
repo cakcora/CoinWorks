@@ -7,14 +7,16 @@ import scala.io.Source
   * Created by cxa123230 on 10/7/2017.
   */
 object CClusterer {
-  val timePeriodMax: Int = 365
+  val timePeriodMax: Int = 366
 
   def main(args: Array[String]): Unit = {
 
-    val crdir: String = "D:\\Bitcoin\\createddata\\dailyOccMatrices\\"
+    val dtype = "Amo" //Occ
+    val crdir: String = "D:\\Bitcoin\\createddata\\daily" + dtype + "Matrices\\"
+    val clusteringEnabled = false
     val startYear: Int = 2009
     val completedClustering: Int = 200
-    val numTimePeriods: Int = (2017 - startYear + 1) * timePeriodMax
+    val numTimePeriods: Int = Option(new File(crdir).list).map(_.filter(_.endsWith(".csv")).size).getOrElse(0)
     val numChainlets: Int = 400
     val vectors = Array.ofDim[Long](numChainlets, numTimePeriods)
 
@@ -22,43 +24,71 @@ object CClusterer {
     var currentTimePeriod = 0
     for (year: Int <- startYear to 2017 by 1) {
       for (timePeriod <- 1 to timePeriodMax by 1) {
-        timIds(currentTimePeriod) = (year + ":" + timePeriod)
-        var updatedFileName: String = if (timePeriodMax == 52) timePeriod + "" else timePeriod + ""
+
+        var updatedFileName: String = timePeriod + ""
         if (updatedFileName.length == 1) updatedFileName = "00" + updatedFileName
         else if (updatedFileName.length == 2) updatedFileName = "0" + updatedFileName
 
-        val fileName: String = crdir + "occ" + year + "day" + updatedFileName + ".csv"
+        val fileName: String = crdir + dtype + year + updatedFileName + ".csv"
 
         val f: File = new File(fileName)
         if (f.exists) {
+          timIds(currentTimePeriod) = (year + ":" + timePeriod)
           val lines = Source.fromFile(fileName).getLines().toList
           var currentChainlet = 0;
           for (line <- lines) {
             val arr = line.split(",")
             for (c <- arr) {
               vectors(currentChainlet)(currentTimePeriod) = c.toLong
-              //              println(currentChainlet+" "+currentTimePeriod+" "+c.toInt)
               currentChainlet += 1
             }
           }
+          currentTimePeriod += 1
         }
         else {
           //          println(fileName + " :((")
         }
-        currentTimePeriod += 1
+
       }
     }
 
 
 
-    val wr = new BufferedWriter(new FileWriter(crdir + "DailyVectors.txt")) //or use weeklyvectors
-    wr.append(timIds.mkString("\t") + "\r\n")
-    for (key <- 0 to vectors.length - 1) {
+    val wr1 = new BufferedWriter(new FileWriter(crdir + "DailyVectors.txt")) //or use weeklyvectors
+    wr1.append(timIds.mkString("\t") + "\r\n")
+    for (key <- 0 until vectors.length) {
       val clus = vectors(key)
-      wr.append(clus.mkString("\t") + "\r\n")
+      wr1.append(clus.mkString("\t") + "\r\n")
     }
-    wr.close()
-    //System.exit(1)
+    wr1.close()
+
+    val wr2 = new BufferedWriter(new FileWriter(crdir + dtype + "ChainletsInTime.txt"))
+    val b = new StringBuffer("year\tday\ttotaltx")
+    for (i <- 1 to 20)
+      for (j <- 1 to 20) {
+        b.append("\t" + i + ":" + j)
+      }
+    wr2.append(b.toString + "\r\n")
+    for (timeIndex <- vectors(0).indices) {
+      val t: Array[String] = timIds(timeIndex).split(":")
+
+      val bf = new StringBuffer()
+      var totaltx = 0l
+      for (chainletIndex <- vectors.indices) {
+        val occVal = vectors(chainletIndex)(timeIndex)
+        totaltx += occVal
+        bf.append("\t" + occVal)
+      }
+      wr2.append(t(0) + "\t" + t(1) + "\t" + totaltx + bf.toString + "\r\n")
+    }
+    wr2.close()
+
+
+    if (!clusteringEnabled) System.exit(1)
+
+
+
+
     val clusters = mutable.HashMap.empty[Int, ChainletCluster]
     for (chainletId <- 0 to vectors.length - 1) {
       clusters(chainletId) = new ChainletCluster(chainletId, vectors(chainletId))
