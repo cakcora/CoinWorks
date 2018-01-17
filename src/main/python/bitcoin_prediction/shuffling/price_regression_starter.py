@@ -1,26 +1,21 @@
 
-
-
-
-
-
-
-
 import pandas as pd
-import numpy as np
-from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 import numpy as np, tensorflow as tf
-from sklearn.preprocessing import OneHotEncoder
 import os
-import csv
 import gc
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+METHOD = "amo"
+PRICED_BITCOIN_FILE_PATH = "D:\\Bitcoin\\pricedBitcoin2009-2018.csv"
+DAILY_OCCURRENCE_FILE_PATH = "D:\\Bitcoin\\createddata\\daily" + METHOD + "matrices\\"
+RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
+RESULT_FILE = METHOD + 'bitcoin_prices_prediction.csv'
 
+# clean the result file.
 
-PRICED_BITCOIN_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\pricedBitcoin.csv"
-DAILY_OCCURRENCE_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\dailyOccmatrices\\"
+if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
+    os.remove(RESULT_FOLDER + RESULT_FILE)
 
 NUMBER_OF_CLASSES = 1
 
@@ -36,7 +31,7 @@ STEP_NUMBER = 100000
 UNITS_OF_HIDDEN_LAYER_1 = 128
 UNITS_OF_HIDDEN_LAYER_2 = 64
 EPSILON = 1e-3
-DISPLAY_STEP = 10
+DISPLAY_STEP = int(STEP_NUMBER / 10)
 ALL_YEAR_INPUT_ALLOWED = False
 YEAR = 2017
 
@@ -53,10 +48,10 @@ def batch_norm_wrapper(inputs, is_training, decay = 0.999):
         train_var = tf.assign(pop_var, pop_var * decay + batch_var * (1 - decay))
         with tf.control_dependencies([train_mean, train_var]):
             return tf.nn.batch_normalization(inputs,
-                batch_mean, batch_var, beta, scale, EPSILON)
+                                             batch_mean, batch_var, beta, scale, EPSILON)
     else:
         return tf.nn.batch_normalization(inputs,
-            pop_mean, pop_var, beta, scale, EPSILON)
+                                         pop_mean, pop_var, beta, scale, EPSILON)
 
 def merge_data(occurrence_data, daily_occurrence_normalized_matrix, aggregation_of_previous_days_allowed):
     if(aggregation_of_previous_days_allowed):
@@ -86,7 +81,7 @@ def get_daily_occurrence_matrices(priced_bitcoin, current_row, is_price_of_previ
     return occurrence_input
 
 def get_normalized_matrix_from_file(day, year, totaltx):
-    daily_occurrence_matrix_path_name = DAILY_OCCURRENCE_FILE_PATH + "occ" + str(year) + 'day' + '{:03}'.format(day) + ".csv"
+    daily_occurrence_matrix_path_name = DAILY_OCCURRENCE_FILE_PATH + METHOD + str(year) + '{:03}'.format(day) + ".csv"
     daily_occurrence_matrix = pd.read_csv(daily_occurrence_matrix_path_name, sep=",", header=None).values
     return np.asarray(daily_occurrence_matrix).reshape(1, daily_occurrence_matrix.size)/totaltx
 
@@ -97,7 +92,7 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
     else:
         priced_bitcoin = priced_bitcoin[priced_bitcoin['year']==YEAR].reset_index(drop=True)
 
-# get normalized occurrence matrix in a flat format and merge with totaltx
+    # get normalized occurrence matrix in a flat format and merge with totaltx
     daily_occurrence_input = np.array([], dtype=np.float32)
     temp = np.array([], dtype=np.float32)
     for current_index, current_row in priced_bitcoin.iterrows():
@@ -114,26 +109,22 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
 
     return daily_occurrence_input
 
-def print_model(train_cost, test_input, predicted, test_target, test_days):
-    myFile = open('C:\\Users\\nca150130\\Desktop\\bitcoin_prices__' + str(YEAR) + ".csv", 'a')
-    if(window_size == 1):
-        myFile.write('IS_PRICE_OF_PREVIOUS_DAYS_ALLOWED:' + str(is_price_of_previous_days_allowed) + '\n')
-        myFile.write('AGGREGATION_OF_PREVIOUS_DAYS_ALLOWED:' + str(aggregation_of_previous_days_allowed) + '\n')
 
-        myFile.write('PREDICTION_HORIZON:' + str(prediction_horizon) + '\n')
-    myFile.write('WINDOW_SIZE:' + str(window_size) + '\n')
+def print_model(test_input, predicted, test_target, test_days):
+    myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
 
     original_log_return = np.log(np.asarray(test_target).reshape(-1,)/test_input[:,-1])
     predicted_log_return = np.log(np.asarray(predicted).reshape(-1,)/test_input[:,-1])
     predicted = np.asarray(predicted).flatten()
 
     for p, t, o_l, p_l, t_d in zip(predicted, test_target, original_log_return, predicted_log_return, test_days):
-        myFile.write(str(p) + "\t" + str(t) + "\t" + str(o_l) + "\t" + str(p_l) + "\t" + str(t_d) + '\n')
-
-    myFile.write('TRAIN_COST:' + '\n')
-    for line in train_cost:
-        myFile.write(str(line))
-        myFile.write('\n')
+        myFile.write("test\t" +
+                     str(YEAR) + "\t" + str(int(t_d[0])) + "\t" +
+                     str(is_price_of_previous_days_allowed) + "\t" +
+                     str(aggregation_of_previous_days_allowed) + "\t" +
+                     str(window_size) + "\t" +
+                     str(prediction_horizon) + "\t" +
+                     str(p) + "\t" + str(t[0]) + "\t" + str(o_l) + "\t" + str(p_l) + '\n')
 
     myFile.close()
 
@@ -231,10 +222,10 @@ def run_print_model(input_number, train_input, train_target, test_input, test_ta
             if i == STEP_NUMBER-1:
                 predicted_price.append(sess.run([predicted], feed_dict={input: test_input, price: test_target})[0])
 
-    print_model(train_cost, test_input, predicted_price, test_target, test_days)
+    print_model(test_input, predicted_price, test_target, test_days)
 #----------------------------------------------------------------------------------------------------------------------#
 parameter_dict = {#0: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':True})}
-                  1: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':False})}
+    1: dict({'is_price_of_previous_days_allowed': True, 'aggregation_of_previous_days_allowed': False})}
 
 def exclude_days(train, test):
     row, column = train.shape
