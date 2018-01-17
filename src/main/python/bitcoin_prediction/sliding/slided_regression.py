@@ -39,8 +39,6 @@ LOG_RETURN_USED = False
 
 
 
-
-
 def batch_norm_wrapper(inputs, is_training, decay = 0.999):
 
     scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
@@ -87,6 +85,7 @@ def get_daily_occurrence_matrices(priced_bitcoin, current_row, is_price_of_previ
             occurrence_data = np.asarray(previous_price_data).reshape(1,-1)
     occurrence_input = np.concatenate((occurrence_data, np.asarray(current_row['price']).reshape(1,1)), axis=1)
     occurrence_input = np.concatenate((occurrence_input, np.asarray(current_row['day']).reshape(1,1)), axis=1)
+    occurrence_input = np.concatenate((occurrence_input, np.asarray(current_row['year']).reshape(1,1)), axis=1)
     return occurrence_input
 
 def get_normalized_matrix_from_file(day, year, totaltx):
@@ -134,16 +133,17 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
     return daily_occurrence_input
 
 
-def print_results(predictedPrice, realPrice, test_days):
+def print_results(predictedPrice, realPrice, test_years, test_days):
     myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
     prefix = str(is_price_of_previous_days_allowed) + "\t" + str(aggregation_of_previous_days_allowed) + '\t' + str(
         window_size) + '\t' + str(prediction_horizon) + '\t'
 
-    for pred, real, day in zip(predictedPrice, realPrice, test_days):
+    for pred, real, year, day in zip(predictedPrice, realPrice, test_years, test_days):
         myFile.write(prefix + "\t" +
                      str(SLIDING_BATCH_SIZE) + "\t" +
                      str(pred[0]) + "\t" +
                      str(real[0]) + "\t" +
+                     str(year[0]) + "\t" +
                      str(int(day[0])) + '\n')
     myFile.close()
 
@@ -152,7 +152,7 @@ def print_cost(total_cost):
     myFile.write('TOTAL_COST:' + str(total_cost) + '\n')
     myFile.close()
 
-def run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days):
+def run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days):
     total_cost = 0
     for index in range(0, len(train_input_list)):
         train_input = train_input_list[index]
@@ -160,6 +160,7 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
         test_input = test_input_list[index]
         test_target = test_target_list[index]
         test_days = test_list_days[index]
+        test_years = test_year_list[index]
 
         if(not LOG_RETURN_USED):
             scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
@@ -224,7 +225,7 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
                 price_ = np.log(test_target)
 
             total_cost = total_cost + math.sqrt(mean_squared_error(price_, predicted_))
-            print_results(predicted_, price_, test_days)
+            print_results(predicted_, price_, test_years, test_days)
             # print_cost(total_cost)
 #----------------------------------------------------------------------------------------------------------------------#
 
@@ -232,6 +233,9 @@ def exclude_days(train_list, test_list):
 
     train_days_list = list()
     test_days_list = list()
+
+    train_year_list = list()
+    test_year_list = list()
 
     train_input_list = list()
     test_input_list = list()
@@ -241,17 +245,23 @@ def exclude_days(train_list, test_list):
         x_test = test_list[index]
 
         row, column = x_train.shape
-        train_days = np.asarray(x_train[:, -1]).reshape(-1, 1)
-        x_train = x_train[:, 0:column - 1]
-        test_days = np.asarray(x_test[:, -1]).reshape(-1, 1)
-        x_test = x_test[:, 0:column - 1]
+        train_days = np.asarray(x_train[:, column]).reshape(-1, 1)
+        test_days = np.asarray(x_test[:, column]).reshape(-1, 1)
+
+        train_year = np.asarray(x_train[:, column-1]).reshape(-1, 1)
+        test_year = np.asarray(x_test[:, column-1]).reshape(-1, 1)
+
+        x_train = x_train[:, 0:column-2]
+        x_test = x_test[:, 0:column-2]
 
         train_days_list.append(train_days)
         test_days_list.append(test_days)
+        train_year_list.append(train_year)
+        test_year_list.append(test_year)
         train_input_list.append(x_train)
         test_input_list.append(x_test)
 
-    return train_input_list, test_input_list, train_days_list, test_days_list
+    return train_input_list, test_input_list, train_year_list, test_year_list, train_days_list, test_days_list
 
 
 def print_list(train_list, test_list):
@@ -299,10 +309,10 @@ def split_input_target(x_train_list, x_test_list):
 def initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed):
     data = preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
     train_list, test_list = train_test_split_(data)
-    x_train_list, x_test_list, train_list_days, test_list_days = exclude_days(train_list, test_list)
+    x_train_list, x_test_list, train_year_list, test_year_list, train_list_days, test_list_days = exclude_days(train_list, test_list)
     input_number, train_input_list, train_target_list, test_input_list, test_target_list = split_input_target(x_train_list, x_test_list)
 
-    return input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days
+    return input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list,  train_list_days, test_list_days
 
 
 parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':True}),
@@ -321,8 +331,8 @@ for step in parameter_dict:
                   "batch_size:", SLIDING_BATCH_SIZE,
                   "priced:", is_price_of_previous_days_allowed,
                   "Aggregated:", aggregation_of_previous_days_allowed)
-            input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days = initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
-            run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days)
+            input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
+            run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days)
 
 
 
