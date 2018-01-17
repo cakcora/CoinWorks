@@ -41,6 +41,8 @@ UNITS_OF_HIDDEN_LAYER_1 = 128
 UNITS_OF_HIDDEN_LAYER_2 = 64
 EPSILON = 1e-3
 DISPLAY_STEP = 10
+LOG_RETURN_USED = True
+
 
 def batch_norm_wrapper(inputs, is_training, decay = 0.999):
 
@@ -159,9 +161,10 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
         test_target = test_target_list[index]
         test_days = test_list_days[index]
 
-        # scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
-        # train_target = scaler.fit_transform(np.asarray(train_target).reshape(-1,1))
-        # test_target = scaler.transform(np.asarray(test_target).reshape(-1,1))
+        if(not LOG_RETURN_USED):
+            scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
+            train_target = scaler.fit_transform(np.asarray(train_target).reshape(-1,1))
+            test_target = scaler.transform(np.asarray(test_target).reshape(-1,1))
 
         predicted_price = []
         with tf.Graph().as_default(), tf.Session() as sess, tf.device('/cpu:0'):
@@ -192,10 +195,13 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
             # Softmax
             w3 = tf.Variable(w3_initial)
             b3 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
-            predicted_log = tf.nn.relu(tf.matmul(l2, w3) + b3)
+            predicted = tf.nn.relu(tf.matmul(l2, w3) + b3)
 
             # Loss, Optimizer and Predictions
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(tf.log(price), predicted_log)))
+            if(LOG_RETURN_USED):
+                rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(tf.log(price), predicted)))
+            else:
+                rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(price, predicted)))
             train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(rmse)
             #--------------------------------------------------------------------------------------------------------------#
             for v in tf.trainable_variables():
@@ -208,14 +214,17 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
                 batch_ys = train_target[sample][:]
                 sess.run(train_step, feed_dict={input: batch_xs, price: batch_ys})
                 if i == STEP_NUMBER-1:
-                    predicted_price.append(sess.run([predicted_log], feed_dict={input: test_input, price: test_target})[0])
+                    predicted_price.append(sess.run([predicted], feed_dict={input: test_input, price: test_target})[0])
 
-            # predicted_ = scaler.inverse_transform(predicted_price[0])
-            # price_ = scaler.inverse_transform(test_target)
+            if(not LOG_RETURN_USED):
+                predicted_ = scaler.inverse_transform(predicted_price[0])
+                price_ = scaler.inverse_transform(test_target)
+            else:
+                predicted_ = predicted_price[0]
+                price_ = np.log(test_target)
 
-            test_price_log = np.log(test_target)
-            total_cost = total_cost + math.sqrt(mean_squared_error(test_price_log, predicted_price[0]))
-            print_results(predicted_price[0], test_price_log, test_days)
+            total_cost = total_cost + math.sqrt(mean_squared_error(price_, predicted_))
+            print_results(predicted_, price_, test_days)
     print_cost(total_cost)
 #----------------------------------------------------------------------------------------------------------------------#
 
