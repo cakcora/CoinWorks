@@ -1,7 +1,15 @@
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.datasets import make_regression
 import pandas as pd
+import numpy as np
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
 import numpy as np, tensorflow as tf
+from sklearn.preprocessing import OneHotEncoder
 import os
+import csv
 import gc
+from sklearn.metrics import mean_squared_error
 import math
 from os.path import dirname as up
 from sklearn.metrics import mean_squared_error
@@ -16,18 +24,9 @@ NUMBER_OF_CLASSES = 1
 
 CHAINLET_ALLOWED = True
 
-METHOD = "occ"
-PRICED_BITCOIN_FILE_PATH = "D:\\Bitcoin\\pricedBitcoin2009-2018.csv"
-DAILY_OCCURRENCE_FILE_PATH = "D:\\Bitcoin\\createddata\\daily" + METHOD + "matrices\\"
-RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
-RESULT_FILE = METHOD + 'slidePediction.csv'
-
-# clean the result file.
-
-if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
-    os.remove(RESULT_FOLDER + RESULT_FILE)
-
-# LOG_FILE = RESULT_FOLDER+'bitcoin_prices_log' + str(START_YEAR) + "_" + str(END_YEAR) + ".csv"
+PRICED_BITCOIN_FILE_NAME = "pricedBitcoin2009-2018.csv"
+DAILY_OCCURRENCE_FILE_NAME = "dailyOccmatrices2009-2018\\dailyOccmatrices\\"
+LOG_FILE = 'C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rmse\\deep_learning\\bitcoin_prices_log' + str(START_YEAR) + "_" + str(END_YEAR) + ".csv"
 
 ROW = -1
 COLUMN = -1
@@ -41,7 +40,11 @@ STEP_NUMBER = 20000
 UNITS_OF_HIDDEN_LAYER_1 = 128
 UNITS_OF_HIDDEN_LAYER_2 = 64
 EPSILON = 1e-3
-DISPLAY_STEP = int(STEP_NUMBER / 10)
+DISPLAY_STEP = 10
+LOG_RETURN_USED = True
+
+
+
 
 
 def batch_norm_wrapper(inputs, is_training, decay = 0.999):
@@ -94,8 +97,7 @@ def get_daily_occurrence_matrices(priced_bitcoin, current_row, is_price_of_previ
 
 def get_normalized_matrix_from_file(day, year, totaltx):
     data_file_path = get_data_file_path()
-    daily_occurrence_file_path = os.path.join(data_file_path, DAILY_OCCURRENCE_FILE_PATH,
-                                              METHOD + str(year) + '{:03}'.format(day) + ".csv")
+    daily_occurrence_file_path = os.path.join(data_file_path, DAILY_OCCURRENCE_FILE_NAME, "occ" + str(year) + '{:03}'.format(day) + ".csv")
     daily_occurrence_matrix = pd.read_csv(daily_occurrence_file_path, sep=",", header=None).values
     return np.asarray(daily_occurrence_matrix).reshape(1, daily_occurrence_matrix.size)/totaltx
 
@@ -114,7 +116,7 @@ def filter_data(priced_bitcoin):
 
 def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed):
     data_file_path = get_data_file_path()
-    price_bitcoin_file_path = os.path.join(data_file_path, PRICED_BITCOIN_FILE_PATH)
+    price_bitcoin_file_path = os.path.join(data_file_path, PRICED_BITCOIN_FILE_NAME)
     priced_bitcoin = pd.read_csv(price_bitcoin_file_path, sep=",")
 
     if (ALL_YEAR_INPUT_ALLOWED):
@@ -142,14 +144,10 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
     return daily_occurrence_input
 
 def print_results(predicted, test_target, test_days):
-    myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
-    prefix = str(is_price_of_previous_days_allowed) + '\t' + str(aggregation_of_previous_days_allowed) + '\t' + str(
-        prediction_horizon) + '\t' + str(window_size) + '\t'
-
+    myFile = open(LOG_FILE, 'a')
+    myFile.write("----------------------------------------------------------------------------------------------------" +"\n")
     for p, t, t_d in zip(predicted, test_target, test_days):
-        myFile.write(
-            prefix + "\t" + str(p).strip("]").strip("[") + "\t" + str(t).strip("]").strip("[") + "\t" + str(t_d).strip(
-                "]").strip("[") + '\n')
+        myFile.write(str(p).strip("]").strip("[") + "\t" + str(t).strip("]").strip("[") + "\t" + str(t_d).strip("]").strip("[") + '\n')
     myFile.close()
 
 def print_cost(total_cost):
@@ -166,9 +164,10 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
         test_target = test_target_list[index]
         test_days = test_list_days[index]
 
-        # scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
-        # train_target = scaler.fit_transform(np.asarray(train_target).reshape(-1,1))
-        # test_target = scaler.transform(np.asarray(test_target).reshape(-1,1))
+        if(not LOG_RETURN_USED):
+            scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
+            train_target = scaler.fit_transform(np.asarray(train_target).reshape(-1,1))
+            test_target = scaler.transform(np.asarray(test_target).reshape(-1,1))
 
         predicted_price = []
         with tf.Graph().as_default(), tf.Session() as sess, tf.device('/cpu:0'):
@@ -199,10 +198,13 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
             # Softmax
             w3 = tf.Variable(w3_initial)
             b3 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
-            predicted_log = tf.nn.relu(tf.matmul(l2, w3) + b3)
+            predicted = tf.nn.relu(tf.matmul(l2, w3) + b3)
 
             # Loss, Optimizer and Predictions
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(tf.log(price), predicted_log)))
+            if(LOG_RETURN_USED):
+                rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(tf.log(price), predicted)))
+            else:
+                rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(price, predicted)))
             train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(rmse)
             #--------------------------------------------------------------------------------------------------------------#
             for v in tf.trainable_variables():
@@ -215,14 +217,17 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
                 batch_ys = train_target[sample][:]
                 sess.run(train_step, feed_dict={input: batch_xs, price: batch_ys})
                 if i == STEP_NUMBER-1:
-                    predicted_price.append(sess.run([predicted_log], feed_dict={input: test_input, price: test_target})[0])
+                    predicted_price.append(sess.run([predicted], feed_dict={input: test_input, price: test_target})[0])
 
-            # predicted_ = scaler.inverse_transform(predicted_price[0])
-            # price_ = scaler.inverse_transform(test_target)
+            if(not LOG_RETURN_USED):
+                predicted_ = scaler.inverse_transform(predicted_price[0])
+                price_ = scaler.inverse_transform(test_target)
+            else:
+                predicted_ = predicted_price[0]
+                price_ = np.log(test_target)
 
-            test_price_log = np.log(test_target)
-            total_cost = total_cost + math.sqrt(mean_squared_error(test_price_log, predicted_price[0]))
-            print_results(predicted_price[0], test_price_log, test_days)
+            total_cost = total_cost + math.sqrt(mean_squared_error(price_, predicted_))
+            print_results(predicted_, price_, test_days)
     print_cost(total_cost)
 #----------------------------------------------------------------------------------------------------------------------#
 
@@ -307,6 +312,14 @@ parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregatio
                   1: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':False})}
 
 
+def print_initializer(window_size, prediction_horizon):
+    myFile = open(LOG_FILE, 'a')
+    myFile.write('IS_PRICE_OF_PREVIOUS_DAYS_ALLOWED:' + str(is_price_of_previous_days_allowed) + '\n')
+    myFile.write('AGGREGATION_OF_PREVIOUS_DAYS_ALLOWED:' + str(aggregation_of_previous_days_allowed) + '\n')
+
+    myFile.write('PREDICTION_HORIZON:' + str(prediction_horizon) + '\n')
+    myFile.write('WINDOW_SIZE:' + str(window_size) + '\n')
+    myFile.close()
 
 for step in parameter_dict:
     gc.collect()
@@ -319,7 +332,7 @@ for step in parameter_dict:
         print("PREDICTION_HORIZON: ", prediction_horizon)
         for window_size in range(1, 8):
             print('WINDOW_SIZE: ', window_size)
-
+            print_initializer(window_size, prediction_horizon)
             input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days = initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
             run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days)
 
