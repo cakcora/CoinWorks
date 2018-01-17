@@ -1,33 +1,28 @@
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.datasets import make_regression
 import pandas as pd
-import numpy as np
 from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
 import numpy as np, tensorflow as tf
-from sklearn.preprocessing import OneHotEncoder
 import os
-import csv
-import gc
-from sklearn.metrics import mean_squared_error
 import math
-from os.path import dirname as up
 from sklearn.metrics import mean_squared_error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 ALL_YEAR_INPUT_ALLOWED = False
-START_YEAR = 2015
-END_YEAR = 2016
-SLIDING_BATCH_SIZE = 60
+START_YEAR = 2016
+END_YEAR = 2017
 NUMBER_OF_CLASSES = 1
 
+SLIDING_BATCH_SIZE = 60
 CHAINLET_ALLOWED = True
 
-PRICED_BITCOIN_FILE_NAME = "pricedBitcoin2009-2018.csv"
-DAILY_OCCURRENCE_FILE_NAME = "dailyOccmatrices2009-2018\\dailyOccmatrices\\"
-LOG_FILE = 'C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rmse\\deep_learning\\bitcoin_prices_log' + str(START_YEAR) + "_" + str(END_YEAR) + ".csv"
+METHOD = "amo"
+PRICED_BITCOIN_FILE_NAME = "D:\\Bitcoin\\pricedBitcoin2009-2018.csv"
+DAILY_OCCURRENCE_FILE_PATH = "D:\\Bitcoin\\createddata\\daily" + METHOD + "matrices\\"
+RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
+RESULT_FILE = METHOD + 'slidingPrediction.csv'
 
+if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
+    os.remove(RESULT_FOLDER + RESULT_FILE)
 ROW = -1
 COLUMN = -1
 TEST_SPLIT = 0.2
@@ -35,13 +30,12 @@ TEST_SPLIT = 0.2
 #DEEP_LEARNING_PARAMETERS
 REGULARIZATION_FOR_LOG = 0.0000001
 LEARNING_RATE = 0.01
-BATCH_SIZE = 20
 STEP_NUMBER = 20000
 UNITS_OF_HIDDEN_LAYER_1 = 128
 UNITS_OF_HIDDEN_LAYER_2 = 64
 EPSILON = 1e-3
-DISPLAY_STEP = 10
-LOG_RETURN_USED = True
+DISPLAY_STEP = int(STEP_NUMBER / 10)
+LOG_RETURN_USED = False
 
 
 
@@ -96,13 +90,11 @@ def get_daily_occurrence_matrices(priced_bitcoin, current_row, is_price_of_previ
     return occurrence_input
 
 def get_normalized_matrix_from_file(day, year, totaltx):
-    data_file_path = get_data_file_path()
-    daily_occurrence_file_path = os.path.join(data_file_path, DAILY_OCCURRENCE_FILE_NAME, "occ" + str(year) + '{:03}'.format(day) + ".csv")
+    daily_occurrence_file_path = os.path.join(DAILY_OCCURRENCE_FILE_PATH,
+                                              METHOD + str(year) + '{:03}'.format(day) + ".csv")
     daily_occurrence_matrix = pd.read_csv(daily_occurrence_file_path, sep=",", header=None).values
     return np.asarray(daily_occurrence_matrix).reshape(1, daily_occurrence_matrix.size)/totaltx
 
-def get_data_file_path():
-    return os.path.join(up(up(up(up(up(up(__file__)))))), "data")
 
 def filter_data(priced_bitcoin):
     end_day_of_previous_year = max(priced_bitcoin[priced_bitcoin['year'] == START_YEAR-1]["day"].values)
@@ -115,9 +107,7 @@ def filter_data(priced_bitcoin):
     return filtered_data
 
 def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed):
-    data_file_path = get_data_file_path()
-    price_bitcoin_file_path = os.path.join(data_file_path, PRICED_BITCOIN_FILE_NAME)
-    priced_bitcoin = pd.read_csv(price_bitcoin_file_path, sep=",")
+    priced_bitcoin = pd.read_csv(PRICED_BITCOIN_FILE_NAME, sep=",")
 
     if (ALL_YEAR_INPUT_ALLOWED):
         pass
@@ -143,15 +133,22 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
 
     return daily_occurrence_input
 
-def print_results(predicted, test_target, test_days):
-    myFile = open(LOG_FILE, 'a')
-    myFile.write("----------------------------------------------------------------------------------------------------" +"\n")
-    for p, t, t_d in zip(predicted, test_target, test_days):
-        myFile.write(str(p).strip("]").strip("[") + "\t" + str(t).strip("]").strip("[") + "\t" + str(t_d).strip("]").strip("[") + '\n')
+
+def print_results(predictedPrice, realPrice, test_days):
+    myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
+    prefix = str(is_price_of_previous_days_allowed) + "\t" + str(aggregation_of_previous_days_allowed) + '\t' + str(
+        window_size) + '\t' + str(prediction_horizon) + '\t'
+
+    for pred, real, day in zip(predictedPrice, realPrice, test_days):
+        myFile.write(prefix + "\t" +
+                     str(SLIDING_BATCH_SIZE) + "\t" +
+                     str(pred[0]) + "\t" +
+                     str(real[0]) + "\t" +
+                     str(int(day[0])) + '\n')
     myFile.close()
 
 def print_cost(total_cost):
-    myFile = open(LOG_FILE, 'a')
+    myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
     myFile.write('TOTAL_COST:' + str(total_cost) + '\n')
     myFile.close()
 
@@ -228,7 +225,7 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
 
             total_cost = total_cost + math.sqrt(mean_squared_error(price_, predicted_))
             print_results(predicted_, price_, test_days)
-    print_cost(total_cost)
+            # print_cost(total_cost)
 #----------------------------------------------------------------------------------------------------------------------#
 
 def exclude_days(train_list, test_list):
@@ -312,27 +309,18 @@ parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregatio
                   1: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':False})}
 
 
-def print_initializer(window_size, prediction_horizon):
-    myFile = open(LOG_FILE, 'a')
-    myFile.write('IS_PRICE_OF_PREVIOUS_DAYS_ALLOWED:' + str(is_price_of_previous_days_allowed) + '\n')
-    myFile.write('AGGREGATION_OF_PREVIOUS_DAYS_ALLOWED:' + str(aggregation_of_previous_days_allowed) + '\n')
-
-    myFile.write('PREDICTION_HORIZON:' + str(prediction_horizon) + '\n')
-    myFile.write('WINDOW_SIZE:' + str(window_size) + '\n')
-    myFile.close()
 
 for step in parameter_dict:
-    gc.collect()
     evalParameter = parameter_dict.get(step)
     is_price_of_previous_days_allowed = evalParameter.get('is_price_of_previous_days_allowed')
     aggregation_of_previous_days_allowed = evalParameter.get('aggregation_of_previous_days_allowed')
-    print("IS_PRICE_OF_PREVIOUS_DAYS_ALLOWED: ", is_price_of_previous_days_allowed)
-    print("AGGREGATION_OF_PREVIOUS_DAYS_ALLOWED: ", aggregation_of_previous_days_allowed)
     for prediction_horizon in range(1, 8):
-        print("PREDICTION_HORIZON: ", prediction_horizon)
         for window_size in range(1, 8):
-            print('WINDOW_SIZE: ', window_size)
-            print_initializer(window_size, prediction_horizon)
+            print('window: ', window_size,
+                  "horizon:", prediction_horizon,
+                  "batch_size:", SLIDING_BATCH_SIZE,
+                  "priced:", is_price_of_previous_days_allowed,
+                  "Aggregated:", aggregation_of_previous_days_allowed)
             input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days = initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
             run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_list_days, test_list_days)
 
