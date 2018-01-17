@@ -44,6 +44,9 @@ DISPLAY_STEP = 10
 LOG_RETURN_USED = True
 
 
+
+
+
 def batch_norm_wrapper(inputs, is_training, decay = 0.999):
 
     scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
