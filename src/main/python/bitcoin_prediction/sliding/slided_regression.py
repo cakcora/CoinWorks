@@ -8,11 +8,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 ALL_YEAR_INPUT_ALLOWED = False
-START_YEAR = 2016
+START_YEAR = 2017
 END_YEAR = 2017
 NUMBER_OF_CLASSES = 1
 
-SLIDING_BATCH_SIZE = 60
+
 CHAINLET_ALLOWED = True
 
 METHOD = "amo"
@@ -97,7 +97,7 @@ def get_normalized_matrix_from_file(day, year, totaltx):
 
 def filter_data(priced_bitcoin):
     end_day_of_previous_year = max(priced_bitcoin[priced_bitcoin['year'] == START_YEAR-1]["day"].values)
-    start_index_of_previous_year = end_day_of_previous_year - SLIDING_BATCH_SIZE - window_size
+    start_index_of_previous_year = end_day_of_previous_year - slide_length - window
     previous_year_batch = priced_bitcoin[(priced_bitcoin['year'] == START_YEAR-1) & (priced_bitcoin['day'] > start_index_of_previous_year)]
     input_batch = priced_bitcoin[(priced_bitcoin['year'] >= START_YEAR) & (priced_bitcoin['year'] <= END_YEAR)]
     filtered_data = previous_year_batch.append(input_batch)
@@ -135,15 +135,15 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
 
 def print_results(predictedPrice, realPrice, test_years, test_days):
     myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
-    prefix = str(is_price_of_previous_days_allowed) + "\t" + str(aggregation_of_previous_days_allowed) + '\t' + str(
-        window_size) + '\t' + str(prediction_horizon) + '\t'
+    prefix = str(priced) + "\t" + str(aggregated) + '\t' + str(
+        window) + '\t' + str(horizon)
 
     for pred, real, year, day in zip(predictedPrice, realPrice, test_years, test_days):
         myFile.write(prefix + "\t" +
-                     str(SLIDING_BATCH_SIZE) + "\t" +
+                     str(slide_length) + "\t" +
                      str(pred[0]) + "\t" +
                      str(real[0]) + "\t" +
-                     str(year[0]) + "\t" +
+                     str(int(year[0])) + "\t" +
                      str(int(day[0])) + '\n')
     myFile.close()
 
@@ -196,7 +196,7 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
             # Softmax
             w3 = tf.Variable(w3_initial)
             b3 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
-            predicted = tf.nn.relu(tf.matmul(l2, w3) + b3)
+            predicted = tf.nn.sigmoid(tf.matmul(l2, w3) + b3)
 
             # Loss, Optimizer and Predictions
             if(LOG_RETURN_USED):
@@ -245,11 +245,11 @@ def exclude_days(train_list, test_list):
         x_test = test_list[index]
 
         row, column = x_train.shape
-        train_days = np.asarray(x_train[:, column]).reshape(-1, 1)
-        test_days = np.asarray(x_test[:, column]).reshape(-1, 1)
+        train_year = np.asarray(x_train[:, -1]).reshape(-1, 1)
+        test_year = np.asarray(x_test[:, -1]).reshape(-1, 1)
 
-        train_year = np.asarray(x_train[:, column-1]).reshape(-1, 1)
-        test_year = np.asarray(x_test[:, column-1]).reshape(-1, 1)
+        train_days = np.asarray(x_train[:, -2]).reshape(-1, 1)
+        test_days = np.asarray(x_test[:, -2]).reshape(-1, 1)
 
         x_train = x_train[:, 0:column-2]
         x_test = x_test[:, 0:column-2]
@@ -275,11 +275,11 @@ def train_test_split_(data):
     end_index = 0
     train_list = list()
     test_list = list()
-    while((end_index+SLIDING_BATCH_SIZE) < data.shape[0]):
-        end_index = end_index + SLIDING_BATCH_SIZE
+    while ((end_index + slide_length) < data.shape[0]):
+        end_index = end_index + slide_length
         train_list.append(data[start_index:end_index])
-        test_list.append(data[end_index:end_index+SLIDING_BATCH_SIZE])
-        start_index = start_index + SLIDING_BATCH_SIZE
+        test_list.append(data[end_index:end_index + slide_length])
+        start_index = start_index + slide_length
     return train_list, test_list
 
 def split_input_target(x_train_list, x_test_list):
@@ -312,7 +312,7 @@ def initialize_setting(window_size, prediction_horizon, is_price_of_previous_day
     x_train_list, x_test_list, train_year_list, test_year_list, train_list_days, test_list_days = exclude_days(train_list, test_list)
     input_number, train_input_list, train_target_list, test_input_list, test_target_list = split_input_target(x_train_list, x_test_list)
 
-    return input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list,  train_list_days, test_list_days
+    return input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
 
 parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':True}),
@@ -322,25 +322,17 @@ parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregatio
 
 for step in parameter_dict:
     evalParameter = parameter_dict.get(step)
-    is_price_of_previous_days_allowed = evalParameter.get('is_price_of_previous_days_allowed')
-    aggregation_of_previous_days_allowed = evalParameter.get('aggregation_of_previous_days_allowed')
-    for prediction_horizon in range(1, 8):
-        for window_size in range(1, 8):
-            print('window: ', window_size,
-                  "horizon:", prediction_horizon,
-                  "batch_size:", SLIDING_BATCH_SIZE,
-                  "priced:", is_price_of_previous_days_allowed,
-                  "Aggregated:", aggregation_of_previous_days_allowed)
-            input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
-            run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days)
-
-
-
-
-
-
-
-
-
-
-
+    priced = evalParameter.get('is_price_of_previous_days_allowed')
+    aggregated = evalParameter.get('aggregation_of_previous_days_allowed')
+    for slide_length in [5, 10.15]:
+        for horizon in range(1, 8):
+            for window in range(1, 8):
+                print('window: ', window,
+                      "horizon:", horizon,
+                      "slide_length:", slide_length,
+                      "priced:", priced,
+                      "Aggregated:", aggregated)
+                input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(
+                    window, horizon, priced, aggregated)
+                run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list,
+                                train_year_list, test_year_list, train_list_days, test_list_days)
