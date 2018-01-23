@@ -85,11 +85,12 @@ public class ChainletGraph {
             for (int o = 1; o <= 20; o++) {
                 String chId = "X" + i + ":" + o;
                 if (grMat.containsKey(chId)) {
-                    bf.append(chId);
+                    //bf.append(chId);
                     for (Long l : grMat.get(chId).keySet()) {
-                        bf.append("\t" + l + ":" + grMat.get(chId).get(l));
+                        bf.append(l + "\t" +
+                                grMat.get(chId).get(l) + "\t");
                     }
-                } else bf.append(chId + "\t" + "NULL");
+                } else bf.append("0\t0");//chId + "\t" + "NULL");
                 bf.append("\r\n");
             }
 
