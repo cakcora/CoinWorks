@@ -9,7 +9,7 @@ import scala.io.Source
 
 /**
   * Created by cxa123230 on 10/7/2017.
-  * Requires parsed transactions data from ChainParser.java
+  * Requires parsed transactions data from ChainParser.java, new version uses output from the cryptoledger library
   */
 object ChainSplitterByTimePeriod {
   private val log = LoggerFactory.getLogger(classOf[ChainParser])
