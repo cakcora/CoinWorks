@@ -15,11 +15,11 @@ NUMBER_OF_CLASSES = 1
 
 CHAINLET_ALLOWED = True
 
-METHOD = ""
+METHOD = "occ"
 PRICED_BITCOIN_FILE_NAME = "D:\\Bitcoin\\pricedBitcoin2009-2018.csv"
-BETTI_NUMBER_FILE_PATH = "D:\\Bitcoin\\createddata\\betti_numbers\\"
+DAILY_OCCURRENCE_FILE_PATH = "D:\\Bitcoin\\filteredDaily" + METHOD + "Matrices\\"
 RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
-RESULT_FILE = METHOD + 'betti_prediction.csv'
+RESULT_FILE = METHOD + 'boostingPrediction.csv'
 
 if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
     os.remove(RESULT_FOLDER + RESULT_FILE)
@@ -38,7 +38,7 @@ UNITS_OF_HIDDEN_LAYER_3 = 64
 EPSILON = 1e-3
 DISPLAY_STEP = int(STEP_NUMBER/10)
 LOG_RETURN_USED = True
-FILTER = 100
+total_matric_sum_dict = {}
 
 def batch_norm_wrapper(inputs, is_training, decay = 0.999):
 
@@ -58,56 +58,78 @@ def batch_norm_wrapper(inputs, is_training, decay = 0.999):
         return tf.nn.batch_normalization(inputs,
             pop_mean, pop_var, beta, scale, EPSILON)
 
-def merge_data(occurrence_data, betti_number_0, betti_number_1):
-    if occurrence_data.size==0:
-        occurrence_data = np.concatenate((betti_number_0, betti_number_1), axis=1)
+def merge_data(occurrence_data, daily_occurrence_normalized_matrix, aggregation_of_previous_days_allowed):
+    if(aggregation_of_previous_days_allowed):
+        if occurrence_data.size==0:
+            occurrence_data = daily_occurrence_normalized_matrix
+        else:
+            occurrence_data = np.add(occurrence_data, daily_occurrence_normalized_matrix)
     else:
-        merged_betti_numbers = np.concatenate((betti_number_0, betti_number_1), axis=1)
-        occurrence_data = np.concatenate((occurrence_data, merged_betti_numbers), axis=1)
+        if occurrence_data.size==0:
+            occurrence_data = daily_occurrence_normalized_matrix
+        else:
+            occurrence_data = np.concatenate((occurrence_data, daily_occurrence_normalized_matrix), axis=1)
     return occurrence_data
 
-def get_daily_betti_numbers(priced_bitcoin, current_row, previous_day_price, is_price_of_previous_days_allowed):
+def get_daily_occurrence_matrices(threshold, priced_bitcoin, current_row, previous_day_price, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed):
     previous_price_data = np.array([], dtype=np.float32)
     occurrence_data = np.array([], dtype=np.float32)
     for index, row in priced_bitcoin.iterrows():
         if not ((row.values == current_row.values).all()):
             previous_price_data = np.append(previous_price_data, row['price'])
-            betti_number_0 = get_betti_numbers(row['day'], os.path.join(BETTI_NUMBER_FILE_PATH, "betti_" + str(0) + "(" + str(FILTER) + ").csv"))
-            betti_number_1 = get_betti_numbers(row['day'], os.path.join(BETTI_NUMBER_FILE_PATH, "betti_" + str(1) + "(" + str(FILTER) + ").csv"))
-            occurrence_data = merge_data(occurrence_data, betti_number_0, betti_number_1)
-    if(is_price_of_previous_days_allowed):
-        if(CHAINLET_ALLOWED):
-            occurrence_data = np.concatenate((occurrence_data, np.asarray(previous_price_data).reshape(1,-1)), axis=1)
-        else:
-            occurrence_data = np.asarray(previous_price_data).reshape(1,-1)
-    if(LOG_RETURN_USED):
-        log_return = np.log(current_row['price']) - np.log(float(previous_day_price))
-        occurrence_input = np.concatenate((occurrence_data, np.asarray(log_return).reshape(1,1)), axis=1)
+            daily_occurrence_normalized_matrix = get_normalized_matrix_from_file(row['day'], row['year'], threshold)
+            occurrence_data = merge_data(occurrence_data, daily_occurrence_normalized_matrix, aggregation_of_previous_days_allowed)
+    if sum(np.asarray(occurrence_data).reshape(-1,1)) == 0:
+        return None
     else:
-        occurrence_input = np.concatenate((occurrence_data, np.asarray(current_row['price']).reshape(1,1)), axis=1)
-    occurrence_input = np.concatenate((occurrence_input, np.asarray(current_row['day']).reshape(1,1)), axis=1)
-    occurrence_input = np.concatenate((occurrence_input, np.asarray(current_row['year']).reshape(1,1)), axis=1)
-    return occurrence_input
+        if(is_price_of_previous_days_allowed):
+            if(CHAINLET_ALLOWED):
+                occurrence_data = np.concatenate((occurrence_data, np.asarray(previous_price_data).reshape(1,-1)), axis=1)
+            else:
+                occurrence_data = np.asarray(previous_price_data).reshape(1,-1)
+        if(LOG_RETURN_USED):
+            log_return = np.log(current_row['price']) - np.log(float(previous_day_price))
+            occurrence_input = np.concatenate((occurrence_data, np.asarray(log_return).reshape(1,1)), axis=1)
+        else:
+            occurrence_input = np.concatenate((occurrence_data, np.asarray(current_row['price']).reshape(1,1)), axis=1)
+        occurrence_input = np.concatenate((occurrence_input, np.asarray(current_row['day']).reshape(1,1)), axis=1)
+        occurrence_input = np.concatenate((occurrence_input, np.asarray(current_row['year']).reshape(1,1)), axis=1)
+        return occurrence_input
 
-def get_betti_numbers(row_day, betti_number_file_name):
-    betti_numbers = pd.read_csv(betti_number_file_name, sep=",",)
-    row_bettis = betti_numbers[betti_numbers['day'] == row_day]
-    row_bettis = row_bettis.drop(['day'], axis=1)
-    normalizer = preprocessing.Normalizer()
-    normalized_betti_numbers = normalizer.transform(row_bettis)
-    return np.asarray(normalized_betti_numbers).reshape(1, normalized_betti_numbers.size)
+def get_normalized_matrix_from_file(day, year, threshold):
+    daily_occurrence_file_path = os.path.join(DAILY_OCCURRENCE_FILE_PATH, METHOD + str(year) + '{:03}'.format(day) + "_" + str(threshold) + ".csv")
+    if not os.path.isfile(daily_occurrence_file_path):
+        return np.asarray([0] * 400).reshape(-1,1)
+    else:
+        daily_occurrence_matrix = pd.read_csv(daily_occurrence_file_path, sep=",", header=None).values
+        key = str(year) + "_" + '{:03}'.format(day) + str(threshold)
 
-def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_allowed, slide_length_for_train):
+        if key not in total_matric_sum_dict.keys():
+            total_matric_sum_dict[key] = np.sum(daily_occurrence_matrix)
+        total_sum = total_matric_sum_dict[key]
+
+        return np.asarray(daily_occurrence_matrix).reshape(1, daily_occurrence_matrix.size)/total_sum
+
+def filter_data(priced_bitcoin, slide_length_for_train):
+    end_day_of_previous_year = max(priced_bitcoin[priced_bitcoin['year'] == START_YEAR-1]["day"].values)
+    start_index_of_previous_year = end_day_of_previous_year - slide_length_for_train - window
+    previous_year_batch = priced_bitcoin[(priced_bitcoin['year'] == START_YEAR-1) & (priced_bitcoin['day'] > start_index_of_previous_year)]
+    input_batch = priced_bitcoin[(priced_bitcoin['year'] >= START_YEAR) & (priced_bitcoin['year'] <= END_YEAR)]
+    filtered_data = previous_year_batch.append(input_batch)
+    filtered_data.insert(0, 'index', range(0, len(filtered_data)))
+    filtered_data = filtered_data.reset_index(drop=True)
+    return filtered_data
+
+def preprocess_data(threshold, window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed, slide_length_for_train):
     priced_bitcoin = pd.read_csv(PRICED_BITCOIN_FILE_NAME, sep=",")
 
     if (ALL_YEAR_INPUT_ALLOWED):
         pass
     else:
-        priced_bitcoin = priced_bitcoin[(priced_bitcoin['year'] == START_YEAR)]
-        priced_bitcoin.insert(0, 'index', range(0, len(priced_bitcoin)))
-        priced_bitcoin = priced_bitcoin.reset_index(drop=True)
+        priced_bitcoin = filter_data(priced_bitcoin, slide_length_for_train)
 
-    daily_betties_input = np.array([], dtype=np.float32)
+    # get normalized occurrence matrix in a flat format and merge with totaltx
+    daily_occurrence_input = np.array([], dtype=np.float32)
     temp = np.array([], dtype=np.float32)
 
     for current_index, current_row in priced_bitcoin.iterrows():
@@ -117,16 +139,21 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
             start_index = current_index-(window_size + prediction_horizon) + 1
             end_index = current_index - prediction_horizon
             previous_day_price= priced_bitcoin.loc[current_index-1, ['price']].values
-            temp = get_daily_betti_numbers(priced_bitcoin[start_index:end_index+1], current_row, previous_day_price, is_price_of_previous_days_allowed)
-        if daily_betties_input.size == 0:
-            daily_betties_input = temp
+            temp = get_daily_occurrence_matrices(threshold, priced_bitcoin[start_index:end_index+1], current_row, previous_day_price, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed)
+        if temp is None:
+            pass
         else:
-            daily_betties_input = np.concatenate((daily_betties_input, temp), axis=0)
-    return daily_betties_input
+            if daily_occurrence_input.size == 0:
+                daily_occurrence_input = temp
+            else:
+                daily_occurrence_input = np.concatenate((daily_occurrence_input, temp), axis=0)
 
-def print_results(predictedPrice, realPrice, test_years, test_days):
+    return daily_occurrence_input
+
+def print_results(predictedPrice, realPrice, test_years, test_days, threshold):
     myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
-    prefix = str(is_price_of_previous_days_allowed) + "\t" + str(window) + '\t' + str(horizon)
+    prefix = str(priced) + "\t" + str(aggregated) + '\t' + str(
+        window) + '\t' + str(horizon) + "\t" + str(threshold)
 
     for pred, real, year, day in zip(predictedPrice, realPrice, test_years, test_days):
         myFile.write(prefix + "\t" +
@@ -143,7 +170,7 @@ def print_cost(total_cost):
     myFile.write('TOTAL_COST:' + str(total_cost) + '\n')
     myFile.close()
 
-def run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days):
+def run_print_model(threshold, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days):
     total_cost = 0
     for index in range(0, len(train_input_list)):
         train_input = train_input_list[index]
@@ -221,7 +248,7 @@ def run_print_model(input_number, train_input_list, train_target_list, test_inpu
                 price_ = scaler.inverse_transform(test_target)
 
             total_cost = total_cost + math.sqrt(mean_squared_error(price_, predicted_))
-            print_results(predicted_, price_, test_years, test_days)
+            print_results(predicted_, price_, test_years, test_days, threshold)
 #----------------------------------------------------------------------------------------------------------------------#
 def exclude_days(train_list, test_list):
 
@@ -299,25 +326,32 @@ def split_input_target(x_train_list, x_test_list):
 
     return column-1, train_input_list, train_target_list, test_input_list, test_target_list
 
-def initialize_setting(window_size, prediction_horizon, is_price_of_previous_days_allowed, slide_length_for_train, slide_length_for_test):
-    data = preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_allowed, slide_length_for_train)
+def initialize_setting(threshold, window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed, slide_length_for_train, slide_length_for_test):
+    data = preprocess_data(threshold, window_size, prediction_horizon, is_price_of_previous_days_allowed, aggregation_of_previous_days_allowed, slide_length_for_train)
     train_list, test_list = train_test_split_(data, slide_length_for_train, slide_length_for_test)
     x_train_list, x_test_list, train_year_list, test_year_list, train_list_days, test_list_days = exclude_days(train_list, test_list)
     input_number, train_input_list, train_target_list, test_input_list, test_target_list = split_input_target(x_train_list, x_test_list)
 
     return input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
-is_price_of_previous_days_allowed = True
-for slide_length_for_train in [15]:
-    for slide_length_for_test in [1]:
-        for horizon in range(1, 5):
-            for window in [3]:
-                print('window: ', window,
-                      "horizon:", horizon,
-                      "slide_length_for_train:", slide_length_for_train,
-                      "slide_length_for_test:", slide_length_for_test,
-                      "is_price_of_previous_days_allowed:", is_price_of_previous_days_allowed)
-                input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(
-                    window, horizon, is_price_of_previous_days_allowed, slide_length_for_train, slide_length_for_test)
-                run_print_model(input_number, train_input_list, train_target_list, test_input_list, test_target_list,
-                                train_year_list, test_year_list, train_list_days, test_list_days)
+parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':True})}
+
+for step in parameter_dict:
+    evalParameter = parameter_dict.get(step)
+    priced = evalParameter.get('is_price_of_previous_days_allowed')
+    aggregated = evalParameter.get('aggregation_of_previous_days_allowed')
+    for threshold in range(0,100,10):
+        for slide_length_for_train in [15]:
+            for slide_length_for_test in [1]:
+                for horizon in range(1, 5):
+                    for window in [3]:
+                        print('window: ', window,
+                              "horizon:", horizon,
+                              "slide_length_for_train:", slide_length_for_train,
+                              "slide_length_for_test:", slide_length_for_test,
+                              "priced:", priced,
+                              "Aggregated:", aggregated)
+                        input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(threshold,
+                            window, horizon, priced, aggregated, slide_length_for_train, slide_length_for_test)
+                        run_print_model(threshold, input_number, train_input_list, train_target_list, test_input_list, test_target_list,
+                                        train_year_list, test_year_list, train_list_days, test_list_days)
