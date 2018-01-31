@@ -308,10 +308,10 @@ def initialize_setting(window_size, prediction_horizon, is_price_of_previous_day
     return input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
 is_price_of_previous_days_allowed = True
-for slide_length_for_train in [5, 10, 15]:
-    for slide_length_for_test in range(1,5,1):
+for slide_length_for_train in [15]:
+    for slide_length_for_test in [1]:
         for horizon in range(1, 5):
-            for window in range(1, 5):
+            for window in [3]:
                 print('window: ', window,
                       "horizon:", horizon,
                       "slide_length_for_train:", slide_length_for_train,
