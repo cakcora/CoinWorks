@@ -32,7 +32,6 @@ STEP_NUMBER = 2000
 UNITS_OF_HIDDEN_LAYER_1 = 256
 UNITS_OF_HIDDEN_LAYER_2 = 128
 UNITS_OF_HIDDEN_LAYER_3 = 64
-EPSILON = 1e-3
 DISPLAY_STEP = int(STEP_NUMBER / 10)
 
 total_matric_sum_dict = {}
@@ -114,7 +113,7 @@ def scale_prices(priced_bitcoin, log_return):
     if log_return:
         for index in range(len(price)):
             if index == 0:
-                log_return_list.append(float(1))
+                log_return_list.append(float(0))
             else:
                 log_return_list.append(np.log(price[index]) - np.log(price[index - 1]))
         log_return_list = pd.DataFrame(log_return_list, columns=["log_return"])
@@ -186,30 +185,30 @@ def build_graph(input_number):
     price = tf.placeholder(tf.float32, shape=[None, NUMBER_OF_CLASSES])
 
     # Layer 1
-    w1 = tf.Variable(tf.random_uniform([input_number, UNITS_OF_HIDDEN_LAYER_1], minval=-math.sqrt(6/(input_number)), maxval=math.sqrt(6/(input_number))))
+    w1 = tf.Variable(tf.random_uniform([input_number, UNITS_OF_HIDDEN_LAYER_1], minval=-math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1)), maxval=math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1))))
     z1 = tf.matmul(input, w1)
-    l1 = tf.nn.relu(z1)
+    l1 = tf.nn.tanh(z1)
     l1_dropout = tf.nn.dropout(l1, 0.9)
 
     # Layer 2
-    w2 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_1, UNITS_OF_HIDDEN_LAYER_2], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1))))
+    w2 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_1, UNITS_OF_HIDDEN_LAYER_2], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2))))
     z2 = tf.matmul(l1_dropout, w2)
-    l2 = tf.nn.relu(z2)
+    l2 = tf.nn.tanh(z2)
     l2_dropout = tf.nn.dropout(l2, 0.9)
 
     # Layer 3
-    w3 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_2, UNITS_OF_HIDDEN_LAYER_3], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2))))
+    w3 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_2, UNITS_OF_HIDDEN_LAYER_3], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3))))
     z3 = tf.matmul(l2_dropout, w3)
-    l3 = tf.nn.relu(z3)
+    l3 = tf.nn.tanh(z3)
     l3_dropout = tf.nn.dropout(l3, 0.9)
 
-    # Softmax
-    w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3))))
+    # Linear
+    w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+NUMBER_OF_CLASSES)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+NUMBER_OF_CLASSES))))
     b4 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
     predicted = tf.matmul(l3_dropout, w4) + b4
 
     rmse = tf.losses.mean_squared_error(price, predicted)
-    train_step = tf.train.RMSPropOptimizer(LEARNING_RATE).minimize(rmse)
+    train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(rmse)
 
     return (input, price), train_step, predicted, rmse, tf.train.Saver()
 
