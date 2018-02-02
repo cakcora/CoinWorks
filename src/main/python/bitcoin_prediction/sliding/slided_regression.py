@@ -18,23 +18,20 @@ DAILY_FILE_PATH = "D:\\Bitcoin\\createddata\\daily" + METHOD + "matrices\\"
 RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
 RESULT_FILE = METHOD + 'slidingPrediction.csv'
 
+
 if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
     os.remove(RESULT_FOLDER + RESULT_FILE)
 
-ROW = -1
-COLUMN = -1
-TEST_SPLIT = 0.2
 
 # DEEP_LEARNING_PARAMETERS
-REGULARIZATION_FOR_LOG = 0.0000001
 LEARNING_RATE = 0.005
 STEP_NUMBER = 2000
-UNITS_OF_HIDDEN_LAYER_1 = 256
-UNITS_OF_HIDDEN_LAYER_2 = 128
-UNITS_OF_HIDDEN_LAYER_3 = 64
+UNITS_OF_HIDDEN_LAYER_1 = 512
+UNITS_OF_HIDDEN_LAYER_2 = 256
+UNITS_OF_HIDDEN_LAYER_3 = 128
+UNITS_OF_HIDDEN_LAYER_4 = 64
 DISPLAY_STEP = int(STEP_NUMBER / 10)
 
-total_matric_sum_dict = {}
 
 
 def merge_data(previous_daily_data, daily_matrix, aggregated):
@@ -84,13 +81,8 @@ def get_matrix_from_file(day, year):
 
     daily_file_path = os.path.join(DAILY_FILE_PATH, METHOD + str(year) + '{:03}'.format(day) + ".csv")
     daily_matrix = pd.read_csv(daily_file_path, sep=",", header=None).values
-    key = str(year) + "_" + '{:03}'.format(day)
 
-    if key not in total_matric_sum_dict.keys():
-        total_matric_sum_dict[key] = np.sum(daily_matrix)
-    total_sum = total_matric_sum_dict[key]
-
-    return np.asarray(daily_matrix).reshape(1, daily_matrix.size) / total_sum
+    return np.asarray(daily_matrix).reshape(1, daily_matrix.size)
 
 
 def filter_data(priced_bitcoin, train_slide_length):
@@ -120,12 +112,7 @@ def scale_prices(priced_bitcoin, log_return):
         log_return_list.reset_index(drop=True, inplace=True)
         priced_bitcoin = pd.concat([priced_bitcoin, log_return_list], axis=1)
 
-    scaler = preprocessing.MinMaxScaler()
-    scaled_price = scaler.fit_transform(np.asarray(price).reshape(-1, 1))
-
-    priced_bitcoin["price"] = scaled_price
-
-    return scaler, priced_bitcoin
+    return priced_bitcoin
 
 
 def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length):
@@ -136,7 +123,7 @@ def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_r
     else:
         priced_bitcoin = filter_data(priced_bitcoin, train_slide_length)
 
-    scaler, priced_bitcoin = scale_prices(priced_bitcoin, log_return)
+    priced_bitcoin = scale_prices(priced_bitcoin, log_return)
     # get normalized occurrence matrix in a flat format and merge with totaltx
     daily_input = np.array([], dtype=np.float32)
     temp = np.array([], dtype=np.float32)
@@ -153,7 +140,20 @@ def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_r
         else:
             daily_input = np.concatenate((daily_input, temp), axis=0)
 
-    return scaler, daily_input
+    total_column = daily_input.shape[1]
+    matrix_column = 3 # target, day, year
+
+    scaler = preprocessing.MinMaxScaler()
+    daily_input[:,0:total_column-matrix_column] = scaler.fit_transform(daily_input[:,0:total_column-matrix_column])
+
+    target_scaler = preprocessing.MinMaxScaler()
+
+    if(log_return):
+        pass
+    else:
+        daily_input[:,-3] = np.asarray(target_scaler.fit_transform(np.asarray(daily_input[:,-3]).reshape(-1,1))).reshape(np.asarray(daily_input[:,-3]).shape)
+
+    return target_scaler, daily_input
 
 
 def print_results(predicted_price, real_price, test_years, test_days):
@@ -188,24 +188,30 @@ def build_graph(input_number):
     w1 = tf.Variable(tf.random_uniform([input_number, UNITS_OF_HIDDEN_LAYER_1], minval=-math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1)), maxval=math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1))))
     z1 = tf.matmul(input, w1)
     l1 = tf.nn.tanh(z1)
-    l1_dropout = tf.nn.dropout(l1, 0.9)
+    l1_dropout = tf.nn.dropout(l1, 0.8)
 
     # Layer 2
     w2 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_1, UNITS_OF_HIDDEN_LAYER_2], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2))))
     z2 = tf.matmul(l1_dropout, w2)
     l2 = tf.nn.tanh(z2)
-    l2_dropout = tf.nn.dropout(l2, 0.9)
+    l2_dropout = tf.nn.dropout(l2, 0.8)
 
     # Layer 3
     w3 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_2, UNITS_OF_HIDDEN_LAYER_3], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3))))
     z3 = tf.matmul(l2_dropout, w3)
     l3 = tf.nn.tanh(z3)
-    l3_dropout = tf.nn.dropout(l3, 0.9)
+    l3_dropout = tf.nn.dropout(l3, 0.8)
+
+    # Layer 4
+    w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, UNITS_OF_HIDDEN_LAYER_4], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+UNITS_OF_HIDDEN_LAYER_4)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+UNITS_OF_HIDDEN_LAYER_4))))
+    z4 = tf.matmul(l3_dropout, w4)
+    l4 = tf.nn.tanh(z4)
+    l4_dropout = tf.nn.dropout(l4, 0.8)
 
     # Linear
-    w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+NUMBER_OF_CLASSES)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+NUMBER_OF_CLASSES))))
-    b4 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
-    predicted = tf.matmul(l3_dropout, w4) + b4
+    w5 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_4, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_4+NUMBER_OF_CLASSES)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_4+NUMBER_OF_CLASSES))))
+    b5 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
+    predicted = tf.matmul(l4_dropout, w5) + b5
 
     rmse = tf.losses.mean_squared_error(price, predicted)
     train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(rmse)
@@ -351,7 +357,7 @@ def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, lo
     return scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
 
-parameter_dict = {0: dict({'priced': True, 'aggregated': False, 'chainlet_allowed': True, 'log_return': True})}
+parameter_dict = {0: dict({'priced': True, 'aggregated': True, 'chainlet_allowed': True, 'log_return': False})}
 
 for step in parameter_dict:
     evalParameter = parameter_dict.get(step)

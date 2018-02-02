@@ -18,22 +18,19 @@ BETTI_NUMBER_FILE_PATH = "D:\\Bitcoin\\createddata\\betti_numbers\\"
 RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
 RESULT_FILE = METHOD + 'betti_prediction.csv'
 
+
 if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
     os.remove(RESULT_FOLDER + RESULT_FILE)
 
-ROW = -1
-COLUMN = -1
-TEST_SPLIT = 0.2
 
 # DEEP_LEARNING_PARAMETERS
-REGULARIZATION_FOR_LOG = 0.0000001
 LEARNING_RATE = 0.005
 STEP_NUMBER = 2000
-UNITS_OF_HIDDEN_LAYER_1 = 256
-UNITS_OF_HIDDEN_LAYER_2 = 128
-UNITS_OF_HIDDEN_LAYER_3 = 64
-DISPLAY_STEP = int(STEP_NUMBER/10)
-FILTER = 100
+UNITS_OF_HIDDEN_LAYER_1 = 512
+UNITS_OF_HIDDEN_LAYER_2 = 256
+UNITS_OF_HIDDEN_LAYER_3 = 128
+UNITS_OF_HIDDEN_LAYER_4 = 64
+DISPLAY_STEP = int(STEP_NUMBER / 10)
 
 
 
@@ -76,9 +73,8 @@ def get_betti_numbers(row_day, betti_number_file_name):
     betti_numbers = pd.read_csv(betti_number_file_name, sep=",",)
     row_bettis = betti_numbers[betti_numbers['day'] == row_day]
     row_bettis = row_bettis.drop(['day'], axis=1)
-    normalizer = preprocessing.Normalizer()
-    normalized_betti_numbers = normalizer.transform(row_bettis)
-    return np.asarray(normalized_betti_numbers).reshape(1, normalized_betti_numbers.size)
+
+    return np.asarray(row_bettis).reshape(1, row_bettis.size)
 
 def filter_data(priced_bitcoin, train_slide_length):
 
@@ -100,22 +96,17 @@ def scale_prices(priced_bitcoin, log_return):
     if log_return:
         for index in range(len(price)):
             if index == 0:
-                log_return_list.append(float(1))
+                log_return_list.append(float(0))
             else:
                 log_return_list.append(np.log(price[index]) - np.log(price[index - 1]))
         log_return_list = pd.DataFrame(log_return_list, columns=["log_return"])
         log_return_list.reset_index(drop=True, inplace=True)
         priced_bitcoin = pd.concat([priced_bitcoin, log_return_list], axis=1)
 
-    scaler = preprocessing.MinMaxScaler()
-    scaled_price = scaler.fit_transform(np.asarray(price).reshape(-1, 1))
-
-    priced_bitcoin["price"] = scaled_price
-
-    return scaler, priced_bitcoin
+    return priced_bitcoin
 
 
-def preprocess_data(window, horizon, priced, betti_allowed, log_return, train_slide_length):
+def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length):
     priced_bitcoin = pd.read_csv(PRICED_BITCOIN_FILE_NAME, sep=",")
 
     if (ALL_YEAR_INPUT_ALLOWED):
@@ -123,7 +114,7 @@ def preprocess_data(window, horizon, priced, betti_allowed, log_return, train_sl
     else:
         priced_bitcoin = filter_data(priced_bitcoin, train_slide_length)
 
-    scaler, priced_bitcoin = scale_prices(priced_bitcoin, log_return)
+    priced_bitcoin = scale_prices(priced_bitcoin, log_return)
     # get normalized occurrence matrix in a flat format and merge with totaltx
     daily_input = np.array([], dtype=np.float32)
     temp = np.array([], dtype=np.float32)
@@ -134,13 +125,26 @@ def preprocess_data(window, horizon, priced, betti_allowed, log_return, train_sl
         else:
             start_index = current_index - (window + horizon) + 1
             end_index = current_index - horizon
-            temp = get_daily_matrices(priced_bitcoin[start_index:end_index + 1], current_row, priced, betti_allowed, log_return, window)
+            temp = get_daily_matrices(priced_bitcoin[start_index:end_index + 1], current_row, priced, aggregated, chainlet_allowed, log_return, window)
         if daily_input.size == 0:
             daily_input = temp
         else:
             daily_input = np.concatenate((daily_input, temp), axis=0)
 
-    return scaler, daily_input
+    total_column = daily_input.shape[1]
+    matrix_column = 3 # target, day, year
+
+    scaler = preprocessing.MinMaxScaler()
+    daily_input[:,0:total_column-matrix_column] = scaler.fit_transform(daily_input[:,0:total_column-matrix_column])
+
+    target_scaler = preprocessing.MinMaxScaler()
+
+    if(log_return):
+        pass
+    else:
+        daily_input[:,-3] = np.asarray(target_scaler.fit_transform(np.asarray(daily_input[:,-3]).reshape(-1,1))).reshape(np.asarray(daily_input[:,-3]).shape)
+
+    return target_scaler, daily_input
 
 
 def print_results(predicted_price, real_price, test_years, test_days):
@@ -166,6 +170,7 @@ def print_cost(total_cost):
 
 
 def build_graph(input_number):
+
     # Placeholders
     input = tf.placeholder(tf.float32, shape=[None, input_number])
     price = tf.placeholder(tf.float32, shape=[None, NUMBER_OF_CLASSES])
@@ -174,24 +179,30 @@ def build_graph(input_number):
     w1 = tf.Variable(tf.random_uniform([input_number, UNITS_OF_HIDDEN_LAYER_1], minval=-math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1)), maxval=math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1))))
     z1 = tf.matmul(input, w1)
     l1 = tf.nn.tanh(z1)
-    l1_dropout = tf.nn.dropout(l1, 0.9)
+    l1_dropout = tf.nn.dropout(l1, 0.8)
 
     # Layer 2
     w2 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_1, UNITS_OF_HIDDEN_LAYER_2], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2))))
     z2 = tf.matmul(l1_dropout, w2)
     l2 = tf.nn.tanh(z2)
-    l2_dropout = tf.nn.dropout(l2, 0.9)
+    l2_dropout = tf.nn.dropout(l2, 0.8)
 
     # Layer 3
     w3 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_2, UNITS_OF_HIDDEN_LAYER_3], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3))))
     z3 = tf.matmul(l2_dropout, w3)
     l3 = tf.nn.tanh(z3)
-    l3_dropout = tf.nn.dropout(l3, 0.9)
+    l3_dropout = tf.nn.dropout(l3, 0.8)
+
+    # Layer 4
+    w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, UNITS_OF_HIDDEN_LAYER_4], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+UNITS_OF_HIDDEN_LAYER_4)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+UNITS_OF_HIDDEN_LAYER_4))))
+    z4 = tf.matmul(l3_dropout, w4)
+    l4 = tf.nn.tanh(z4)
+    l4_dropout = tf.nn.dropout(l4, 0.8)
 
     # Linear
-    w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+NUMBER_OF_CLASSES)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+NUMBER_OF_CLASSES))))
-    b4 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
-    predicted = tf.matmul(l3_dropout, w4) + b4
+    w5 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_4, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_4+NUMBER_OF_CLASSES)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_4+NUMBER_OF_CLASSES))))
+    b5 = tf.Variable(tf.zeros([NUMBER_OF_CLASSES]))
+    predicted = tf.matmul(l4_dropout, w5) + b5
 
     rmse = tf.losses.mean_squared_error(price, predicted)
     train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(rmse)
@@ -325,9 +336,9 @@ def split_input_target(x_train_list, x_test_list):
     return column - 1, train_input_list, train_target_list, test_input_list, test_target_list
 
 
-def initialize_setting(window, horizon, priced, betti_allowed, log_return, train_slide_length, test_slide_length):
+def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, test_slide_length):
 
-    scaler, data = preprocess_data(window, horizon, priced, betti_allowed, log_return, train_slide_length)
+    scaler, data = preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length)
     train_list, test_list = train_test_split_(data, train_slide_length, test_slide_length, window)
     x_train_list, x_test_list, train_year_list, test_year_list, train_list_days, test_list_days = exclude_days(
         train_list, test_list)
@@ -335,7 +346,6 @@ def initialize_setting(window, horizon, priced, betti_allowed, log_return, train
         x_train_list, x_test_list)
 
     return scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
-
 
 parameter_dict = {0: dict({'priced': True, 'betti_allowed': True, 'log_return': True})}
 
