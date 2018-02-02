@@ -357,7 +357,9 @@ def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, lo
     return scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
 
-parameter_dict = {0: dict({'priced': True, 'aggregated': True, 'chainlet_allowed': True, 'log_return': False})}
+parameter_dict = {0: dict({'priced': True, 'aggregated': False, 'chainlet_allowed': False, 'log_return': True}),
+                  1: dict({'priced': True, 'aggregated': True, 'chainlet_allowed': True, 'log_return': True}),
+                  2: dict({'priced': False, 'aggregated': True, 'chainlet_allowed': True, 'log_return': True})}
 
 for step in parameter_dict:
     evalParameter = parameter_dict.get(step)
@@ -371,7 +373,7 @@ for step in parameter_dict:
     elif chainlet_allowed == False and aggregated == True:
         print("Aggregation can not be applied without chainlet")
         break
-    for train_slide_length in [5,10,15]:
+    for train_slide_length in [5,10,15,20]:
         if train_slide_length<=0:
             print("Train slide length can not be negative or zero")
             break
@@ -385,8 +387,8 @@ for step in parameter_dict:
             if test_slide_length>365:
                 print("Test slide length can not be bigger than 365")
                 break
-            for horizon in range(1,4):
-                for window in range(3,6):
+            for horizon in range(1,6):
+                for window in range(1,6):
                     if train_slide_length >= (horizon + window):
                         print('window: ', window,
                             "horizon:", horizon,
