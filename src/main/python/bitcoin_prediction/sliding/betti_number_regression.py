@@ -31,7 +31,7 @@ UNITS_OF_HIDDEN_LAYER_2 = 256
 UNITS_OF_HIDDEN_LAYER_3 = 128
 UNITS_OF_HIDDEN_LAYER_4 = 64
 DISPLAY_STEP = int(STEP_NUMBER / 10)
-
+FILTER = 100
 
 
 def merge_data(previous_daily_data, betti_number_0, betti_number_1):
@@ -42,7 +42,7 @@ def merge_data(previous_daily_data, betti_number_0, betti_number_1):
         previous_daily_data = np.concatenate((previous_daily_data, merged_betti_numbers), axis=1)
     return previous_daily_data
 
-def get_daily_matrices(priced_bitcoin, current_row, priced, betti_allowed, log_return, window):
+def get_daily_matrices(priced_bitcoin, current_row, priced, betti_allowed, log_return):
     previous_price_data = np.array([], dtype=np.float32)
     previous_daily_data = np.array([], dtype=np.float32)
     merged_data = np.array([], dtype=np.float32)
@@ -106,7 +106,7 @@ def scale_prices(priced_bitcoin, log_return):
     return priced_bitcoin
 
 
-def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length):
+def preprocess_data(window, horizon, priced, betti_allowed, log_return, train_slide_length):
     priced_bitcoin = pd.read_csv(PRICED_BITCOIN_FILE_NAME, sep=",")
 
     if (ALL_YEAR_INPUT_ALLOWED):
@@ -115,7 +115,6 @@ def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_r
         priced_bitcoin = filter_data(priced_bitcoin, train_slide_length)
 
     priced_bitcoin = scale_prices(priced_bitcoin, log_return)
-    # get normalized occurrence matrix in a flat format and merge with totaltx
     daily_input = np.array([], dtype=np.float32)
     temp = np.array([], dtype=np.float32)
 
@@ -125,7 +124,7 @@ def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_r
         else:
             start_index = current_index - (window + horizon) + 1
             end_index = current_index - horizon
-            temp = get_daily_matrices(priced_bitcoin[start_index:end_index + 1], current_row, priced, aggregated, chainlet_allowed, log_return, window)
+            temp = get_daily_matrices(priced_bitcoin[start_index:end_index + 1], current_row, priced, betti_allowed, log_return)
         if daily_input.size == 0:
             daily_input = temp
         else:
@@ -336,9 +335,9 @@ def split_input_target(x_train_list, x_test_list):
     return column - 1, train_input_list, train_target_list, test_input_list, test_target_list
 
 
-def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, test_slide_length):
+def initialize_setting(window, horizon, priced, betti_allowed, log_return, train_slide_length, test_slide_length):
 
-    scaler, data = preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length)
+    scaler, data = preprocess_data(window, horizon, priced, betti_allowed, log_return, train_slide_length)
     train_list, test_list = train_test_split_(data, train_slide_length, test_slide_length, window)
     x_train_list, x_test_list, train_year_list, test_year_list, train_list_days, test_list_days = exclude_days(
         train_list, test_list)
@@ -347,7 +346,8 @@ def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, lo
 
     return scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
-parameter_dict = {0: dict({'priced': True, 'betti_allowed': True, 'log_return': True})}
+parameter_dict = {0: dict({'priced': True, 'betti_allowed': True, 'log_return': True}),
+                  1: dict({'priced': False, 'betti_allowed': True, 'log_return': True})}
 
 for step in parameter_dict:
     evalParameter = parameter_dict.get(step)
@@ -357,7 +357,7 @@ for step in parameter_dict:
     if betti_allowed == False and priced == False:
         print("!!!!Input can not be empty!!!!")
         break
-    for train_slide_length in [5,10,15]:
+    for train_slide_length in [5,10,15,20]:
         if train_slide_length<=0:
             print("Train slide length can not be negative or zero")
             break
@@ -371,8 +371,8 @@ for step in parameter_dict:
             if test_slide_length>365:
                 print("Test slide length can not be bigger than 365")
                 break
-            for horizon in range(1,4):
-                for window in range(3,6):
+            for horizon in range(1,6):
+                for window in range(1,6):
                     if train_slide_length >= (horizon + window):
                         print('window: ', window,
                             "horizon:", horizon,
