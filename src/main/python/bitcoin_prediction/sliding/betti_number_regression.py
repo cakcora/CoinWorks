@@ -346,47 +346,46 @@ def initialize_setting(window, horizon, priced, betti_allowed, log_return, train
 
     return scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
-parameter_dict = {0: dict({'priced': True, 'betti_allowed': True, 'log_return': True}),
-                  1: dict({'priced': False, 'betti_allowed': True, 'log_return': True})}
+parameter_dict = {0: dict({'priced': True, 'betti_allowed': True, 'log_return': True, "train_slide_length" : 7, "test_slide_length":1})}
 
 for step in parameter_dict:
     evalParameter = parameter_dict.get(step)
     priced = evalParameter.get('priced')
     betti_allowed = evalParameter.get('betti_allowed')
     log_return = evalParameter.get('log_return')
+    train_slide_length = evalParameter.get('train_slide_length')
+    test_slide_length = evalParameter.get('test_slide_length')
     if betti_allowed == False and priced == False:
         print("!!!!Input can not be empty!!!!")
         break
-    for train_slide_length in [5,10,15,20]:
-        if train_slide_length<=0:
-            print("Train slide length can not be negative or zero")
-            break
-        if train_slide_length>365:
-            print("Training slide length can not be bigger than 365")
-            break
-        for test_slide_length in range(3,6,1):
-            if test_slide_length<=0:
-                print("Test slide length can not be negative or zero")
-                break
-            if test_slide_length>365:
-                print("Test slide length can not be bigger than 365")
-                break
-            for horizon in range(1,6):
-                for window in range(1,6):
-                    if train_slide_length >= (horizon + window):
-                        print('window: ', window,
-                            "horizon:", horizon,
-                            "train_slide_length:", train_slide_length,
-                            "test_slide_length:", test_slide_length,
-                            "priced:", priced,
-                            "betti_allowed:", betti_allowed,
-                            "log_return:", log_return)
-                        scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(
-                            window, horizon, priced, betti_allowed, log_return, train_slide_length, test_slide_length)
-                        run_print_model(scaler, input_number, log_return, train_input_list, train_target_list, test_input_list, test_target_list, test_year_list, test_list_days)
-                    else:
-                        print("Sum of horizon and window is bigger than train slide length")
-                        print('window: ', window,
-                              "horizon:", horizon,
-                              "train_slide_length:", train_slide_length)
+    if train_slide_length<=0:
+        print("Train slide length can not be negative or zero")
+        break
+    if train_slide_length>365:
+        print("Training slide length can not be bigger than 365")
+        break
+    if test_slide_length<=0:
+        print("Test slide length can not be negative or zero")
+        break
+    if test_slide_length>365:
+        print("Test slide length can not be bigger than 365")
+        break
+    for horizon in range(1,10):
+        for window in range(1,10):
+            if train_slide_length >= (horizon + window):
+                print('window: ', window,
+                    "horizon:", horizon,
+                    "train_slide_length:", train_slide_length,
+                    "test_slide_length:", test_slide_length,
+                    "priced:", priced,
+                    "betti_allowed:", betti_allowed,
+                    "log_return:", log_return)
+                scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(
+                    window, horizon, priced, betti_allowed, log_return, train_slide_length, test_slide_length)
+                run_print_model(scaler, input_number, log_return, train_input_list, train_target_list, test_input_list, test_target_list, test_year_list, test_list_days)
+            else:
+                print("Sum of horizon and window is bigger than train slide length")
+                print('window: ', window,
+                      "horizon:", horizon,
+                      "train_slide_length:", train_slide_length)
 print("TASK COMPLETED")
