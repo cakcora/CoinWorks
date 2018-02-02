@@ -2,7 +2,6 @@
 #install.packages(c("plyr", "ggplot2", "ineq"))
 require(plyr)
 require(ggplot2)
-require(ineq)
 
 
 rm(list=ls(all=TRUE))
@@ -17,7 +16,7 @@ confusion<-function(results){
   tn<-nrow(results[results$realLR<=0&results$predictedLR<=0,])/aggB
   fn<- nrow(results[results$realLR>0&results$predictedLR<=0,])/aggB
   fp<-nrow(results[results$realLR<=0&results$predictedLR>0,])/aggB
-  return(c(tp,fp,tn,fn))
+  return(c(tp,fp,tn,fn,tp+tn))
 }
  
 
@@ -28,7 +27,7 @@ dat<- ddply(resDL,.(priced,feature,slideTrain,slideTest,window,horizon), summari
                   meanDev = mean(abs(realLR-predictedLR)), days=length(realLR))
 dat$method<-"chainlets"
 z<-ddply(resDL, .(priced,feature,slideTrain,slideTest,window,horizon), function(x) confusion(x))
-colnames(z) <- c("priced","feature","slideTrain","slideTest","window","horizon","tp","fp","tn","fn")
+colnames(z) <- c("priced","feature","slideTrain","slideTest","window","horizon","tp","fp","tn","fn","acc")
 aggDL<-cbind(z,dat$method,dat$meanDev,dat$days)
  
 
@@ -41,7 +40,7 @@ dat<- ddply(resBetti,.(priced,feature,slideTrain,slideTest,window,horizon), summ
 dat$method<-"betti" 
 z<-ddply(resBetti, .(priced,feature,slideTrain,slideTest,window,horizon), function(x) confusion(x))
 
-colnames(z) <- c("priced","feature","slideTrain","slideTest","window","horizon","tp","fp","tn","fn")
+colnames(z) <- c("priced","feature","slideTrain","slideTest","window","horizon","tp","fp","tn","fn","acc")
 aggBetti<-cbind(z,dat$method,dat$meanDev,dat$days)
  
  
