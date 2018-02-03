@@ -24,11 +24,12 @@ fileDL = "occslidingPrediction.csv"
 resDL <- readFile(fileDL)
 colnames(resDL) <- c("priced","feature","window","horizon","slideTrain","slideTest","predictedLR","realLR","year","day")
 dat<- ddply(resDL,.(priced,feature,slideTrain,slideTest,window,horizon), summarize,
-                  meanDev = mean(abs(realLR-predictedLR)), days=length(realLR))
+                  rmse = mean((realLR-predictedLR)^2), days=length(realLR))
+dat$rmse<-dat$rmse^0.5
 dat$method<-"chainlets"
 z<-ddply(resDL, .(priced,feature,slideTrain,slideTest,window,horizon), function(x) confusion(x))
 colnames(z) <- c("priced","feature","slideTrain","slideTest","window","horizon","tp","fp","tn","fn","acc")
-aggDL<-cbind(z,dat$method,dat$meanDev,dat$days)
+aggDL<-cbind(z,dat$method,dat$rmse,dat$days)
  
 
 
@@ -36,12 +37,13 @@ fileB = "betti_prediction.csv"
 resBetti <-readFile(fileB)
 colnames(resBetti) <- c("priced","feature", "window","horizon","slideTrain","slideTest","predictedLR","realLR","year","day") 
 dat<- ddply(resBetti,.(priced,feature,slideTrain,slideTest,window,horizon), summarize,
-              meanDev = mean(abs(realLR-predictedLR)), days=length(realLR))
+              rmse = mean(abs(realLR-predictedLR)^2), days=length(realLR))
+dat$rmse<-dat$rmse^0.5
 dat$method<-"betti" 
 z<-ddply(resBetti, .(priced,feature,slideTrain,slideTest,window,horizon), function(x) confusion(x))
 
 colnames(z) <- c("priced","feature","slideTrain","slideTest","window","horizon","tp","fp","tn","fn","acc")
-aggBetti<-cbind(z,dat$method,dat$meanDev,dat$days)
+aggBetti<-cbind(z,dat$method,dat$rmse,dat$days)
  
  
 View( rbind(aggDL,aggBetti) )
