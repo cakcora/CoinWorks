@@ -44,7 +44,7 @@ Anaconda is recommended to install both for python and tensorflow installation. 
 
 ## Authors
  - Nazmiye Ceren ABAY
- - Cuneyt Gurkan Akcora
+ - Cuneyt Gurcan Akcora
 
 ## Project Structure
 Here, our project is divided into two main parts as data files and source codes written in Java and Python.
