@@ -36,8 +36,8 @@ Tensorflow r1.1
 Please visit the given links to install required software to run CoinWork project.
 
 ```
-Python Installation: https://www.python.org/downloads/
-Tensorflow Installation: https://www.tensorflow.org/install/
+Python Installation     : https://www.python.org/downloads/
+Tensorflow Installation : https://www.tensorflow.org/install/
 ```
 
 Anaconda is recommended to install both for python and tensorflow installation. Anaconda is a open source distribution of Python and it simplifies package management and deployment. Please visit https://anaconda.org/ for more information.
@@ -64,16 +64,17 @@ Our data spans from 2009 to 2018 in each file:
 
 
  * [src](./src)
-    * [python](./python)
-        * [bitcoin_prediction](./bitcoin_prediction)
-            * [bitcoin_tests](./bitcoin_tests)
-                * In this folder, we put bitcoin test files to predict log return of bitcoin with recursive neural network (RNN) and random forest algorithms.
-            * [sliding](./sliding)
-                * [slided_regression.py](./sliding/slided_regression.py)
-                    * This class can be used to predict bitcoin both for betti numbers and chainlets. It takes 3 file parameters to run prediction model bitcoin price file, chainlet file and result file.
-                * [filtration_regression.py](./sliding/filtration_regression.py)
-                    * For given threshold values, chainlets are filtrated and fed into the prediction model. For each threshold, one model is constructed and output its prediction.
-                * [boosting_of_filtrated_regression.py](./sliding/boosting_of_filtrated_regression.py)
-                    * This class takes the previously constructed models of filtration_regression.py and re-build the stronger deep learning model with them.
+    * [main](./src/main)
+        * [python](./python)
+            * [bitcoin_prediction](./bitcoin_prediction)
+                * [bitcoin_tests](./bitcoin_tests)
+                    * In this folder, we put bitcoin test files to predict log return of bitcoin with recursive neural network (RNN) and random forest algorithms.
+                * [sliding](./sliding)
+                    * [slided_regression.py](./sliding/slided_regression.py)
+                        * This class can be used to predict bitcoin both for betti numbers and chainlets. It takes 3 file parameters to run prediction model bitcoin price file, chainlet file and result file.
+                    * [filtration_regression.py](./sliding/filtration_regression.py)
+                        * For given threshold values, chainlets are filtrated and fed into the prediction model. For each threshold, one model is constructed and output its prediction.
+                    * [boosting_of_filtrated_regression.py](./sliding/boosting_of_filtrated_regression.py)
+                        * This class takes the previously constructed models of filtration_regression.py and re-build the stronger deep learning model with them.
 ## Deep Learning Network Structure
 In this project, for both slided and filtration techniques, regression of deep learning is used for constructing the model for prediction of Bitcoin system. While constructing deep learning, we have used 4 hidden layer with hyperbolic tangent activation function. To get better convergence of gradient descent, Xavier weight initialization technique is applied. For avoiding the overfitting of training bitcoin sets, dropout technique is used as a regularization technique.
