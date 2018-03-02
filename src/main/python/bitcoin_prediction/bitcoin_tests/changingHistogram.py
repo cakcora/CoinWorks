@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 
 
 
-PRICED_BITCOIN_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\pricedBitcoin.csv"
-DAILY_OCCURRENCE_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\dailyOccmatrices\\"
+PRICED_BITCOIN_FILE_PATH = "..\\Desktop\\matrix\\pricedBitcoin.csv"
+DAILY_OCCURRENCE_FILE_PATH = "..\\Desktop\\matrix\\dailyOccmatrices\\"
 
 
 

@@ -24,8 +24,8 @@ ROW = -1
 COLUMN = -1
 
 
-PRICED_BITCOIN_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\pricedBitcoin.csv"
-DAILY_OCCURRENCE_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\dailyOccmatrices\\"
+PRICED_BITCOIN_FILE_PATH = "..\\Desktop\\matrix\\pricedBitcoin.csv"
+DAILY_OCCURRENCE_FILE_PATH = "..\\Desktop\\matrix\\dailyOccmatrices\\"
 
 
 def preprocessData():
@@ -60,5 +60,5 @@ def preprocessData():
     return input, priced_bitcoin_label.values
 
 input, label = preprocessData()
-np.savetxt("C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\input.txt", input)
-np.savetxt("C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\label.txt", label)
+np.savetxt("..\\PycharmProjects\\CoinWorks\\src\\main\\python\\input.txt", input)
+np.savetxt("..\\PycharmProjects\\CoinWorks\\src\\main\\python\\label.txt", label)

@@ -13,8 +13,7 @@ import numpy as np, tensorflow as tf
 from sklearn.preprocessing import OneHotEncoder
 import math
 
-#FILE_NAME = "C:\\Users\\nca150130\\Desktop\\bitcoin_prices_mse_2017.csv"
-FILE_NAME = "C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rnn_order_2017.csv"
+FILE_NAME = ",,\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rnn_order_2017.csv"
 MIN_COST = 10000
 
 with open(FILE_NAME, "r") as ins:

@@ -15,8 +15,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 
-PRICED_BITCOIN_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\pricedBitcoin.csv"
-DAILY_OCCURRENCE_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\dailyOccmatrices\\"
+PRICED_BITCOIN_FILE_PATH = "..\\Desktop\\matrix\\pricedBitcoin.csv"
+DAILY_OCCURRENCE_FILE_PATH = "..\\Desktop\\matrix\\dailyOccmatrices\\"
 
 
 ROW = -1
@@ -85,7 +85,7 @@ def preprocess_data(window_size, prediction_horizon, is_price_of_previous_days_a
     return daily_occurrence_input
 
 def print_results(predicted, test_target, original_log_return, predicted_log_return, cost, test_days):
-    myFile = open('C:\\Users\\nca150130\\Desktop\\bitcoin_outputs\\random_regression\\bitcoin_prices_' + str(YEAR) + ".csv", 'a')
+    myFile = open('..\\Desktop\\bitcoin_outputs\\random_regression\\bitcoin_prices_' + str(YEAR) + ".csv", 'a')
     if(window_size == 1):
         myFile.write('IS_PRICE_OF_PREVIOUS_DAYS_ALLOWED:' + str(is_price_of_previous_days_allowed) + '\n')
         myFile.write('AGGREGATION_OF_PREVIOUS_DAYS_ALLOWED:' + str(aggregation_of_previous_days_allowed) + '\n')

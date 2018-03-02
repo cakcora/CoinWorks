@@ -13,8 +13,8 @@ import pandas as pd
 from keras.layers.core import Dense, Dropout
 
 
-PRICED_BITCOIN_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\pricedBitcoin.csv"
-DAILY_OCCURRENCE_FILE_PATH = "C:\\Users\\nca150130\\Desktop\\matrix\\dailyOccmatrices\\"
+PRICED_BITCOIN_FILE_PATH = "..\\Desktop\\matrix\\pricedBitcoin.csv"
+DAILY_OCCURRENCE_FILE_PATH = "..\\Desktop\\matrix\\dailyOccmatrices\\"
 
 NUMBER_OF_CLASSES = 1
 
@@ -133,7 +133,7 @@ def get_model_prediction(rnn, test_X, batch_size):
     return np.asarray(predicted_list).reshape(-1,1)
 
 def print_model(scaler, rnn, test_X, test_Y, test_days, batch_size, window_size, prediction_horizon):
-    myFile = open('C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rnn_' + str(YEAR) + ".csv", 'a')
+    myFile = open('..\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rnn_' + str(YEAR) + ".csv", 'a')
     predicted = get_model_prediction(rnn, test_X, batch_size)
     test_predicted = scaler.inverse_transform(predicted)
     price = scaler.inverse_transform(test_Y)

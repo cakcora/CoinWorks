@@ -224,8 +224,8 @@ def run_print_model(input_number, train_input, train_target, test_input, test_ta
 
     print_model(test_input, predicted_price, test_target, test_days)
 #----------------------------------------------------------------------------------------------------------------------#
-parameter_dict = {#0: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':True})}
-    1: dict({'is_price_of_previous_days_allowed': True, 'aggregation_of_previous_days_allowed': False})}
+parameter_dict = {0: dict({'is_price_of_previous_days_allowed':True, 'aggregation_of_previous_days_allowed':True}),
+                  1: dict({'is_price_of_previous_days_allowed': True, 'aggregation_of_previous_days_allowed': False})}
 
 def exclude_days(train, test):
     row, column = train.shape
