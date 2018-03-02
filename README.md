@@ -1,6 +1,6 @@
 <h1>CoinWorks Library</h1>
 
-A Java/Scala library for Bitcoin. The software was used for the following projects:
+A Java/Scala library for Bitcoin. Contact us at cuneyt.akcora a.t utdallas d.o.t edu for information or requests. The software was used for the following projects:
 
 
 
