@@ -40,11 +40,11 @@ Python Installation     : https://www.python.org/downloads/
 Tensorflow Installation : https://www.tensorflow.org/install/
 ```
 
-Anaconda is recommended to install both for python and tensorflow installation. Anaconda is a open source distribution of Python and it simplifies package management and deployment. Please visit https://anaconda.org/ for more information.
+Anaconda is recommended to be used for installation of both python and tensorflow. Anaconda is a open source distribution of Python and it simplifies package management and deployment. Please visit https://anaconda.org/ for more information.
 
 ## Authors
  - Nazmiye Ceren ABAY
- - Cuneyt Gurcan Akcora
+ - Cuneyt Gurcan AKCORA
 
 ## Project Structure
 Here, our project is divided into two main parts as data files and source codes written in Java and Python.
