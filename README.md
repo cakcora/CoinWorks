@@ -1,9 +1,9 @@
-# CoinWorks
+<h1>CoinWorks works</h1>
 
-A Java/Scala parser for Bitcoin.
+A Java/Scala library for Bitcoin. The software was used for the following projects:
 
 
-<h1>Blockchain works</h1>
+
   
   <h3>3. [Under submission] ChainNet: Learning on Blockchain Graphs with Topological Features</h3>
   <p>Using persistent homology based ideas, we offer an elegant, easily extendable and computationally light approach for graph representation learning on Blockchain networks to predict cryptocurrency prices.</p>
