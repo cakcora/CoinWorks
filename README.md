@@ -1,6 +1,6 @@
 
-
-<img src="https://user-images.githubusercontent.com/6023331/36913973-4c09184c-1e11-11e8-83a2-18dfc6b1b938.png" height="72" width="72">
+<img src="https://user-images.githubusercontent.com/6023331/36913973-4c09184c-1e11-11e8-83a2-18dfc6b1b938.png" width="72" height="72"/> &nbsp;&nbsp;&nbsp;&nbsp;
+<img src="https://user-images.githubusercontent.com/6023331/36926816-47501caa-1e3f-11e8-8fa8-bee5cdff3dfe.png" width="72" height="72"/>
 
 
 # CoinWorks
@@ -77,4 +77,4 @@ Our data spans from 2009 to 2018 in each file:
                     * [boosting_of_filtrated_regression.py](./sliding/boosting_of_filtrated_regression.py)
                         * This class takes the previously constructed models of filtration_regression.py and re-build the stronger deep learning model with them.
 ## Deep Learning Network Structure
-In this project, for both slided and filtration techniques, regression of deep learning is used for constructing the model for prediction of Bitcoin system. While constructing deep learning, we have used 4 hidden layer with hyperbolic tangent activation function. To get better convergence of gradient descent, Xavier weight initialization technique is applied. For avoiding the overfitting of training bitcoin sets, dropout technique is used as a regularization technique.
+In this project, for both slided and filtration techniques, regression of deep learning is used for constructing the model for prediction of Bitcoin system. While constructing deep learning, we have used 4 hidden layer with hyperbolic tangent activation function. To get better convergence of gradient descent, Xavier weight initialization technique is applied. For avoiding the overfitting of training bitcoin sets, dropout technique is used as a regularization technique and its value is 0.2 for each hidden layer.
