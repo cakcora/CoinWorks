@@ -1,4 +1,4 @@
-<h1>CoinWorks works</h1>
+<h1>CoinWorks Library</h1>
 
 A Java/Scala library for Bitcoin. The software was used for the following projects:
 
