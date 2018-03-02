@@ -53,7 +53,7 @@ Here, our project is divided into two main parts as data files and source codes 
 Our data spans from 2009 to 2018 in each file:
 <ul>
   <li> <a href="/data/dailyOccmatrices2009-2018.rar">Chainlet occurrence matrices (1MB)</a>: Each data file contains the matrix of the day. The file occ2009003.csv gives a 20x20 matrix of chainlet occcurences for year 2009 and day 003.</li>
-  <li><a href="/data/dailyAmoMatrices2009-2018.rar"> Chainlet amount matrices: (3.8MB)</a>: Each data file contains the matrix of the day. The file amo2009003.csv gives a 20x20 matrix of chainlet amounts for year 2009 and day 003.</li>
+  <li><a href="/data/dailyAmoMatrices2009-2018.rar">Chainlet amount matrices: (3.8MB)</a>: Each data file contains the matrix of the day. The file amo2009003.csv gives a 20x20 matrix of chainlet amounts for year 2009 and day 003.</li>
   <li> Graeve's feature values:</li>
   <li> Betti numbers 0 and 1:</li>
   <li> Filtered matrices</li>
@@ -74,6 +74,6 @@ Our data spans from 2009 to 2018 in each file:
                 * [filtration_regression.py](./sliding/filtration_regression.py)
                     * For given threshold values, chainlets are filtrated and fed into the prediction model. For each threshold, one model is constructed and output its prediction.
                 * [boosting_of_filtrated_regression.py](./sliding/boosting_of_filtrated_regression.py)
-                    * This class takes the previously constructed models of filtration_regression.py and re-build the stronger model with deep learning.
+                    * This class takes the previously constructed models of filtration_regression.py and re-build the stronger deep learning model with them.
 ## Deep Learning Network Structure
 In this project, for both slided and filtration techniques, regression of deep learning is used for constructing the model for prediction of Bitcoin system. While constructing deep learning, we have used 4 hidden layer with hyperbolic tangent activation function. To get better convergence of gradient descent, Xavier weight initialization technique is applied. For avoiding the overfitting of training bitcoin sets, dropout technique is used as a regularization technique.
