@@ -16,3 +16,18 @@ A Java/Scala library for Bitcoin. The software was used for the following projec
   <p>We offer a holistic view on Blockchain. Starting with a brief history, we give the building blocks of Blockchain,
 and explain their interactions. As graph mining has become a major part its analysis, we elaborate on graph theoretical
 aspects of the Blockchain technology.</p>
+
+
+
+<h2>Data Files</h2>
+Our data spans from 2009 to 2018 in each file:
+<ul>
+  <li> <a href="/data/dailyOccmatrices2009-2018.rar">Chainlet occurrence matrices</a>: Each data file contains the matrix of the day. The file occ2009003.csv gives a 20x20 matrix of chainlet occcurences for year 2009 and day 003.</li>
+  <li> Chainlet amount matrices:</li>
+  <li> Graeve's feature values:</li>
+  <li> Betti numbers 0 and 1:</li>
+  <li> Filtered matrices</li>
+  <li> Bitcoin prices</li>
+  
+</ul>
+  
