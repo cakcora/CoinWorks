@@ -54,10 +54,10 @@ Our data spans from 2009 to 2018 in each file:
 <ul>
   <li> <a href="/data/dailyOccmatrices2009-2018.rar">Chainlet occurrence matrices (1MB)</a>: Each data file contains the matrix of the day. The file occ2009003.csv gives a 20x20 matrix of chainlet occcurences for year 2009 and day 003.</li>
   <li><a href="/data/dailyAmoMatrices2009-2018.rar">Chainlet amount matrices: (3.8MB)</a>: Each data file contains the matrix of the day. The file amo2009003.csv gives a 20x20 matrix of chainlet amounts for year 2009 and day 003.</li>
-  <li> Graeve's feature values:</li>
-  <li> Betti numbers 0 and 1:</li>
-  <li> Filtered matrices</li>
-  <li> Bitcoin prices</li>
+  <li> <a href="/data/feature.txt">Graeve's feature values(3.8MB)</a>: Extracted daily features</li>
+  <li> Betti numbers <a href="/data/betti_0(100).csv">0</a> and <a href="/data/betti_1(100).csv">1</a> </li>
+  <li> <a href="/data/filteredDailyOccMatrices.rar">Filtered occurence matrices</a></li>
+  <li> <a href="/data/pricedBitcoin2009-2018.csv">Bitcoin prices</a></li>
 </ul>
 
 ### Source Files
