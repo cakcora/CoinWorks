@@ -74,6 +74,7 @@ Each line in the output edge file is tab separated with the format:
 Unix time of transaction\thash of transaction\thash of first output address\tamount of first output bitcoins\thash of second output address\tamount of second output bitcoins\t(additional outputs, if exist)\r\n
 ```
 
+<img src="https://user-images.githubusercontent.com/6596905/38154759-80cbf57a-3439-11e8-8d84-9706e5825d5c.png" width="50%"/> 
 
 Consider the Bitcoin graph in Figure 1, where transactions and addresses are shown with rectangles and circles, respectively. This graph would be given in two files: inputsYear_Month.txt and outputsYear_Month.txt. Files would include these lines:
 
