@@ -1,7 +1,7 @@
 ## Data Files
 
 ### Processed Data Files
-Our processed data spans from 2009 to 2018 in each file:
+Our processed data covers Bitcoin history 2009 to 2018:
 <ul>
   <li> <a href="/data/dailyOccmatrices2009-2018.rar">Chainlet occurrence matrices (1MB)</a>: Each data file contains the matrix of the day. The file occ2009003.csv gives a 20x20 matrix of chainlet occcurences for year 2009 and day 003.</li>
   <li><a href="/data/dailyAmoMatrices2009-2018.rar">Chainlet amount matrices: (3.8MB)</a>: Each data file contains the matrix of the day. The file amo2009003.csv gives a 20x20 matrix of chainlet amounts for year 2009 and day 003.</li>
