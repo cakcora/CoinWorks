@@ -99,7 +99,7 @@ UnixTimeOft_4	HashOft_4 HashOfa_12	3.7*10^8	HashOfa_13	0.3*10^8
   <li> <a href="https://utdallas.box.com/s/73i8q4g59ceoum9scc4kkbhi4ritmueg">2009 data (0.1MB)</a></li>
   <li> <a href="https://utdallas.box.com/s/6g2li4ls8zk2wfnf3tsl3gsr713r4pms">2010 data (15MB)</a></li>
   <li> <a href="https://utdallas.box.com/s/bu30643q4l0a79b4907c2a51tx31s16a">2011 data (300MB)</a></li>
-   <li> <a href="https://utdallas.box.com/s/vb60kxanb2yifq2yaozviu6nsojnzm1c">2012 data (1.2GB)</a></li>
+   <li> <a href="https://utdallas.box.com/s/vb60kxanb2yifq2yaozviu6nsojnzm1c">2012 data (1.2GB)</a></li> 
    <li> <a href="https://utdallas.box.com/s/t2w1dc4xbds377lfgxulzk44sr6fwj1t">2013 data (3.2GB)</a></li>
    <li> <a href="https://utdallas.box.com/s/xrh9bw8ctmy0kuvx24h6b8v53tdwi127">2014 data (5.2GB)</a></li>
    <li> <a href="https://utdallas.box.com/s/zl1n1wh1dqgcicj59qvd8cmas2iz936y">2015 data (9.6GB)</a></li>
