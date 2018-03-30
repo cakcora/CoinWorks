@@ -82,10 +82,12 @@ UnixTimeOft_4	HashOft_3	2	HashOft_2	0
 
 
 ### outputsYear_Month.txt
-outputs
 UnixTimeOft_1	HashOft_1	HashOfa_6	10^8	HashOfa_7	0.8^0.8
+
 UnixTimeOft_2	HashOft_2	HashOfa_8	3.8*10^8
+
 UnixTimeOft_3	HashOft_3 HashOfa_9	0.2*10^8	HashOfa_10	0.2*10^8	HashOfa_11	0.3*10^8
+
 UnixTimeOft_4	HashOft_4 HashOfa_12	3.7*10^8	HashOfa_13	0.3*10^8
 
 <ul>
@@ -106,7 +108,7 @@ UnixTimeOft_4	HashOft_4 HashOfa_12	3.7*10^8	HashOfa_13	0.3*10^8
 Please send your data related questions to cuneyt.akcora AT utdallas DOT edu.
 
 Please cite one of the following works when using this data:
-
+```
 @inproceedings{abay2018,
   title={ChainNet: Learning on Blockchain Graphs with Topological Features},
   author={Abay, Nazmiye Ceren and Akcora, Cuneyt Gurcan and Gel, Yulia R. and Islambekov, Umar D. and Kantarcioglu, Murat and Thuraisingham, Bhavani},
@@ -115,8 +117,9 @@ Please cite one of the following works when using this data:
   year={2018},
   organization={ACM}
 }
+```
 
-
+```
 @inproceedings{akcora2018pakdd,
   title={Forecasting Bitcoin Price with Graph Chainlets},
   author={Akcora, Cuneyt Gurcan and Dey, Asim Kumar and Gel, Yulia R. and Kantarcioglu, Murat},
@@ -125,7 +128,7 @@ Please cite one of the following works when using this data:
   year={2018},
   organization={Springer}
 }
-
+```
 ### Source Files
 
 
