@@ -65,11 +65,14 @@ Our processed data spans from 2009 to 2018 in each file:
 Other than the processed data files, we also have raw input and output edges of transactions. This data is divided into yearly and monthly files. Each year's data is zipped together and contains 12 input edge files and 12 output edge files of transactions that were mined in the blocks of that year/month. 
 
 Each line in the input edge file is tab separated with the format:
+```
 Unix time of transaction\thash of transaction\thash of first input transaction\tindex of output from first input transaction\thash of second input transaction\tindex of output from second input transaction\t(additional inputs, if exist)\r\n
+```
 
 Each line in the output edge file is tab separated with the format:
+```
 Unix time of transaction\thash of transaction\thash of first output address\tamount of first output bitcoins\thash of second output address\tamount of second output bitcoins\t(additional outputs, if exist)\r\n
-
+```
 
 
 Consider the Bitcoin graph in Figure 1, where transactions and addresses are shown with rectangles and circles, respectively. This graph would be given in two files: inputsYear_Month.txt and outputsYear_Month.txt. Files would include these lines:
