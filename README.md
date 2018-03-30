@@ -71,24 +71,25 @@ Each line in the output edge file is tab separated with the format:
 Unix time of transaction\thash of transaction\thash of first output address\tamount of first output bitcoins\thash of second output address\tamount of second output bitcoins\t(additional outputs, if exist)\r\n
 
 
+
 Consider the Bitcoin graph in Figure 1, where transactions and addresses are shown with rectangles and circles, respectively. This graph would be given in two files: inputsYear_Month.txt and outputsYear_Month.txt. Files would include these lines:
 
-### inputsYear_Month.txt
-
+```
+-- inputsYear_Month.txt
 UnixTimeOft_1	HashOft_1	HashOft_x1	0	HashOft_x2	8
 UnixTimeOft_2	HashOft_1	HashOft_x3	1	HashOft_x4	3	HashOft_x5	0
 UnixTimeOft_3	HashOft_1	1
 UnixTimeOft_4	HashOft_3	2	HashOft_2	0
+```
 
+```
 
-### outputsYear_Month.txt
+-- outputsYear_Month.txt
 UnixTimeOft_1	HashOft_1	HashOfa_6	10^8	HashOfa_7	0.8^0.8
-
 UnixTimeOft_2	HashOft_2	HashOfa_8	3.8*10^8
-
 UnixTimeOft_3	HashOft_3 HashOfa_9	0.2*10^8	HashOfa_10	0.2*10^8	HashOfa_11	0.3*10^8
-
 UnixTimeOft_4	HashOft_4 HashOfa_12	3.7*10^8	HashOfa_13	0.3*10^8
+```
 
 <ul>
   <li> <a href="https://utdallas.box.com/s/73i8q4g59ceoum9scc4kkbhi4ritmueg">2009 data (0.1MB)</a></li>
@@ -100,7 +101,7 @@ UnixTimeOft_4	HashOft_4 HashOfa_12	3.7*10^8	HashOfa_13	0.3*10^8
    <li> <a href="https://utdallas.box.com/s/zl1n1wh1dqgcicj59qvd8cmas2iz936y">2015 data (9.6GB)</a></li>
    <li> <a href="https://utdallas.box.com/s/vuog5rneci364h4m6w5f8eursk2ym786">2016 inputs (8.1GB)</a></li>
    <li> <a href="https://utdallas.box.com/s/9wozbdip3yjkfxgnqkf6x3jww9v5rm3m">2016 outputs (8.5GB)</a></li>
-   <li> <a href="https://utdallas.box.com/s/atscqz8cle50rc5abvbc4ct20qdqoyhi">2017 data until August(13.2GB)</a></li>
+   <li> <a href="https://utdallas.box.com/s/atscqz8cle50rc5abvbc4ct20qdqoyhi">2017 data until August (13.2GB)</a></li>
 </ul>
 
 
