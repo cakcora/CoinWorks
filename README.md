@@ -5,7 +5,7 @@
 
 # CoinWorks
 
-<h3>3. [Under submission] ChainNet: Learning on Blockchain Graphs with Topological Features</h3>
+<h3>3. [Under submission] ...</h3>
   <p>Using persistent homology based ideas, we offer an elegant, easily extendable and computationally light approach for graph representation learning on Blockchain networks to predict cryptocurrency prices.</p>
 
  <h3>2. <a href = "http://cakcora.github.io/blockchain/576.pdf">Forecasting Bitcoin Price with Graph Chainlets </a> (PAKDD 2018) </h3>
