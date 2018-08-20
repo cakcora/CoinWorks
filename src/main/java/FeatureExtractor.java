@@ -91,7 +91,7 @@ public class FeatureExtractor {
 
 
         HashMap<Long, StringBuffer> content = new HashMap<>();
-        String f[] = {"D://bitcoin/createddata/txInputs.txt", "D://bitcoin/createddata/txOutputSums.txt"};
+        String f[] = {"D://bitcoin/createddata/txInputs.txt", "D://bitcoin/createddata/txOutputs.txt"};
         for (String fileName : f) {
 
             String substring = fileName.substring(26, 27);

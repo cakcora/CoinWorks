@@ -14,7 +14,7 @@ public class ChainletGraph {
     static int timePeriodMax = 366;
 
     public static void main(String[] args) throws Exception {
-        String[] coins = {("Bitcoin"), ("Namecoin"), ("Litecoin")};
+        String[] coins = {("Bitcoin")};//, ("Namecoin"), ("Litecoin")};
         for (String coin : coins) {
             getmatrix(coin);
         }
@@ -32,7 +32,7 @@ public class ChainletGraph {
 
         long max = 0000;
 
-        for (int year = 2017; year <= 2017; year++) {
+        for (int year = 2016; year <= 2017; year++) {
 
             for (int timePeriod = 1; timePeriod <= timePeriodMax; timePeriod++) {
                 int dim = 20;
