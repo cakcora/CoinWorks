@@ -75,7 +75,7 @@ def normalize_data(data):
     return scaler, data
 
 def train_test_split_(data):
-    np.random.shuffle(data)
+    #np.random.shuffle(data)
     train_size = int(len(data)*TEST_SPLIT)
     remaining = train_size%BATCH_SIZE
     if remaining != 0:
@@ -133,7 +133,7 @@ def get_model_prediction(rnn, test_X, batch_size):
     return np.asarray(predicted_list).reshape(-1,1)
 
 def print_model(scaler, rnn, test_X, test_Y, test_days, batch_size, window_size, prediction_horizon):
-    myFile = open('C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rnn_' + str(YEAR) + ".csv", 'a')
+    myFile = open('C:\\Users\\nca150130\\PycharmProjects\\CoinWorks\\src\\main\\python\\results\\rnn_order___' + str(YEAR) + ".csv", 'a')
     predicted = get_model_prediction(rnn, test_X, batch_size)
     test_predicted = scaler.inverse_transform(predicted)
     price = scaler.inverse_transform(test_Y)
@@ -151,18 +151,17 @@ def print_model(scaler, rnn, test_X, test_Y, test_days, batch_size, window_size,
         myFile.write(result.replace("[", "").replace("]", ""))
     myFile.close()
 
-for prediction_horizon in range(1, 6):
-    print("PREDICTION_HORIZON: ", prediction_horizon)
-    for window_size in range(1, 6):
-        print('WINDOW_SIZE: ', window_size)
-        scaler, train_input, train_target, test_input, test_target, train_days, test_days = initialize_setting(window_size, prediction_horizon)
 
-        train_X = np.reshape(train_input, (train_input.shape[0], 1, train_input.shape[1]))
-        train_Y = np.reshape(train_target,(-1, 1))
-        test_X = np.reshape(test_input, (test_input.shape[0], 1, test_input.shape[1]))
-        test_Y = np.reshape(test_target,(-1, 1))
+window_size = 4
+prediction_horizon = 2
+scaler, train_input, train_target, test_input, test_target, train_days, test_days = initialize_setting(window_size, prediction_horizon)
 
-        rnn = build_rnn(train_X, train_Y, window_size, BATCH_SIZE)
-        print_model(scaler, rnn, test_X, test_Y, test_days, 1, window_size, prediction_horizon)
+train_X = np.reshape(train_input, (train_input.shape[0], 1, train_input.shape[1]))
+train_Y = np.reshape(train_target,(-1, 1))
+test_X = np.reshape(test_input, (test_input.shape[0], 1, test_input.shape[1]))
+test_Y = np.reshape(test_target,(-1, 1))
+
+rnn = build_rnn(train_X, train_Y, window_size, BATCH_SIZE)
+print_model(scaler, rnn, test_X, test_Y, test_days, 1, window_size, prediction_horizon)
 
 

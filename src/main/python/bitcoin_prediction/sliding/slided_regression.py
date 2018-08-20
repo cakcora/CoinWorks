@@ -3,7 +3,8 @@ from sklearn import preprocessing
 import numpy as np, tensorflow as tf
 import os
 import math
-from sklearn.metrics import mean_squared_error
+import sys
+
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -11,16 +12,6 @@ ALL_YEAR_INPUT_ALLOWED = False
 START_YEAR = 2017
 END_YEAR = 2017
 NUMBER_OF_CLASSES = 1
-
-METHOD = "occ"
-PRICED_BITCOIN_FILE_NAME = "D:\\Bitcoin\\pricedBitcoin2009-2018.csv"
-DAILY_FILE_PATH = "D:\\Bitcoin\\createddata\\daily" + METHOD + "matrices\\"
-RESULT_FOLDER = "D:\\Bitcoin\\createddata\\results\\"
-RESULT_FILE = METHOD + 'slidingPrediction.csv'
-
-
-if os.path.isfile(RESULT_FOLDER + RESULT_FILE):
-    os.remove(RESULT_FOLDER + RESULT_FILE)
 
 
 # DEEP_LEARNING_PARAMETERS
@@ -31,7 +22,7 @@ UNITS_OF_HIDDEN_LAYER_2 = 256
 UNITS_OF_HIDDEN_LAYER_3 = 128
 UNITS_OF_HIDDEN_LAYER_4 = 64
 DISPLAY_STEP = int(STEP_NUMBER / 10)
-
+KEEPING_PROBABILITY = 0.8
 
 
 def merge_data(previous_daily_data, daily_matrix, aggregated):
@@ -48,14 +39,14 @@ def merge_data(previous_daily_data, daily_matrix, aggregated):
     return previous_daily_data
 
 
-def get_daily_matrices(priced_bitcoin, current_row, priced, aggregated, chainlet_allowed, log_return, window):
+def get_daily_matrices(priced_bitcoin, current_row, priced, aggregated, chainlet_allowed, log_return, window, daily_file_path):
     previous_price_data = np.array([], dtype=np.float32)
     previous_daily_data = np.array([], dtype=np.float32)
     merged_data = np.array([], dtype=np.float32)
     for index, row in priced_bitcoin.iterrows():
         if not ((row.values == current_row.values).all()):
             previous_price_data = np.append(previous_price_data, row['price'])
-            daily_matrix = get_matrix_from_file(row['day'], row['year'])
+            daily_matrix = get_matrix_from_file(row['day'], row['year'], daily_file_path)
             previous_daily_data = merge_data(previous_daily_data, daily_matrix, aggregated)
     if chainlet_allowed:
         if aggregated:
@@ -77,9 +68,9 @@ def get_daily_matrices(priced_bitcoin, current_row, priced, aggregated, chainlet
     return merged_data
 
 
-def get_matrix_from_file(day, year):
+def get_matrix_from_file(day, year, daily_file_path):
 
-    daily_file_path = os.path.join(DAILY_FILE_PATH, METHOD + str(year) + '{:03}'.format(day) + ".csv")
+    daily_file_path = os.path.join(daily_file_path, str(year) + '{:03}'.format(day) + ".csv")
     daily_matrix = pd.read_csv(daily_file_path, sep=",", header=None).values
 
     return np.asarray(daily_matrix).reshape(1, daily_matrix.size)
@@ -115,8 +106,8 @@ def scale_prices(priced_bitcoin, log_return):
     return priced_bitcoin
 
 
-def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length):
-    priced_bitcoin = pd.read_csv(PRICED_BITCOIN_FILE_NAME, sep=",")
+def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, bitcoin_price_file, daily_file_path):
+    priced_bitcoin = pd.read_csv(bitcoin_price_file, sep=",")
 
     if (ALL_YEAR_INPUT_ALLOWED):
         pass
@@ -134,7 +125,7 @@ def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_r
         else:
             start_index = current_index - (window + horizon) + 1
             end_index = current_index - horizon
-            temp = get_daily_matrices(priced_bitcoin[start_index:end_index + 1], current_row, priced, aggregated, chainlet_allowed, log_return, window)
+            temp = get_daily_matrices(priced_bitcoin[start_index:end_index + 1], current_row, priced, aggregated, chainlet_allowed, log_return, window, daily_file_path)
         if daily_input.size == 0:
             daily_input = temp
         else:
@@ -156,8 +147,8 @@ def preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_r
     return target_scaler, daily_input
 
 
-def print_results(predicted_price, real_price, test_years, test_days):
-    myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
+def print_results(predicted_price, real_price, test_years, test_days, result_file):
+    myFile = open(result_file, 'a')
     prefix = str(priced) + "\t" + str(aggregated) + '\t' + str(
         window) + '\t' + str(horizon)
 
@@ -172,11 +163,6 @@ def print_results(predicted_price, real_price, test_years, test_days):
     myFile.close()
 
 
-def print_cost(total_cost):
-    myFile = open(RESULT_FOLDER + RESULT_FILE, 'a')
-    myFile.write('TOTAL_COST:' + str(total_cost) + '\n')
-    myFile.close()
-
 
 def build_graph(input_number):
 
@@ -188,25 +174,25 @@ def build_graph(input_number):
     w1 = tf.Variable(tf.random_uniform([input_number, UNITS_OF_HIDDEN_LAYER_1], minval=-math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1)), maxval=math.sqrt(6/(input_number+UNITS_OF_HIDDEN_LAYER_1))))
     z1 = tf.matmul(input, w1)
     l1 = tf.nn.tanh(z1)
-    l1_dropout = tf.nn.dropout(l1, 0.8)
+    l1_dropout = tf.nn.dropout(l1, KEEPING_PROBABILITY)
 
     # Layer 2
     w2 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_1, UNITS_OF_HIDDEN_LAYER_2], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_1+UNITS_OF_HIDDEN_LAYER_2))))
     z2 = tf.matmul(l1_dropout, w2)
     l2 = tf.nn.tanh(z2)
-    l2_dropout = tf.nn.dropout(l2, 0.8)
+    l2_dropout = tf.nn.dropout(l2, KEEPING_PROBABILITY)
 
     # Layer 3
     w3 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_2, UNITS_OF_HIDDEN_LAYER_3], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_2+UNITS_OF_HIDDEN_LAYER_3))))
     z3 = tf.matmul(l2_dropout, w3)
     l3 = tf.nn.tanh(z3)
-    l3_dropout = tf.nn.dropout(l3, 0.8)
+    l3_dropout = tf.nn.dropout(l3, KEEPING_PROBABILITY)
 
     # Layer 4
     w4 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_3, UNITS_OF_HIDDEN_LAYER_4], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+UNITS_OF_HIDDEN_LAYER_4)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_3+UNITS_OF_HIDDEN_LAYER_4))))
     z4 = tf.matmul(l3_dropout, w4)
     l4 = tf.nn.tanh(z4)
-    l4_dropout = tf.nn.dropout(l4, 0.8)
+    l4_dropout = tf.nn.dropout(l4, KEEPING_PROBABILITY)
 
     # Linear
     w5 = tf.Variable(tf.random_uniform([UNITS_OF_HIDDEN_LAYER_4, NUMBER_OF_CLASSES], minval=-math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_4+NUMBER_OF_CLASSES)), maxval=math.sqrt(6/(UNITS_OF_HIDDEN_LAYER_4+NUMBER_OF_CLASSES))))
@@ -220,8 +206,8 @@ def build_graph(input_number):
 
 
 def run_print_model(scaler, input_number, log_return, train_input_list, train_target_list, test_input_list, test_target_list,
-                    test_year_list, test_list_days):
-    total_cost = -1
+                    test_year_list, test_list_days, result_file):
+
     for index in range(0, len(train_input_list)):
         train_input = train_input_list[index]
         train_target = train_target_list[index]
@@ -262,7 +248,7 @@ def run_print_model(scaler, input_number, log_return, train_input_list, train_ta
                     predicted_ = scaler.inverse_transform(predicted_list[0])
                     price_ = scaler.inverse_transform(test_target)
 
-                print_results(predicted_, price_, test_years, test_days)
+                print_results(predicted_, price_, test_years, test_days, result_file)
 # ---------------------------------------------------------------------------------------------------------------------#
 def exclude_days(train_list, test_list):
 
@@ -303,7 +289,7 @@ def print_list(train_list, test_list):
     for index in range(0, len(train_list)):
         for training, test in zip(train_list[index][:, -1], test_list[index][:, -1]):
             print(str(training) + "\t" + str(test) + "\n")
-    print("BITTI")
+    print("END OF PRINTING")
 
 
 def train_test_split_(data, train_slide_length, test_slide_length, window):
@@ -345,9 +331,9 @@ def split_input_target(x_train_list, x_test_list):
     return column - 1, train_input_list, train_target_list, test_input_list, test_target_list
 
 
-def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, test_slide_length):
+def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, test_slide_length, bitcoin_price_file, daily_file_path):
 
-    scaler, data = preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length)
+    scaler, data = preprocess_data(window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, bitcoin_price_file, daily_file_path)
     train_list, test_list = train_test_split_(data, train_slide_length, test_slide_length, window)
     x_train_list, x_test_list, train_year_list, test_year_list, train_list_days, test_list_days = exclude_days(
         train_list, test_list)
@@ -357,21 +343,34 @@ def initialize_setting(window, horizon, priced, aggregated, chainlet_allowed, lo
     return scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days
 
 
-parameter_dict = {0: dict({'priced': True, 'aggregated': True, 'chainlet_allowed': True, 'log_return': True, "train_slide_length" : 7, "test_slide_length":1})}
+parameter_dict = {0: dict({'priced': True, 'aggregated': True, 'other_allowed': True, 'log_return': True, "train_slide_length" : 300, "test_slide_length":1})}
+
+
+def get_file_parameters():
+
+    bitcoin_price_file = sys.argv[1]
+    daily_file_path = sys.argv[2]
+    result_file = sys.argv[3]
+    return bitcoin_price_file, daily_file_path, result_file
+
 
 for step in parameter_dict:
+
+    bitcoin_price_file, daily_file_path, result_file = get_file_parameters()
+
     evalParameter = parameter_dict.get(step)
     priced = evalParameter.get('priced')
     aggregated = evalParameter.get('aggregated')
     log_return = evalParameter.get('log_return')
-    chainlet_allowed = evalParameter.get('chainlet_allowed')
+    other_allowed = evalParameter.get('other_allowed')
     train_slide_length = evalParameter.get('train_slide_length')
     test_slide_length = evalParameter.get('test_slide_length')
-    if chainlet_allowed == False and priced == False:
+
+    if other_allowed == False and priced == False:
         print("!!!!Input can not be empty!!!!")
         break
-    elif chainlet_allowed == False and aggregated == True:
-        print("Aggregation can not be applied without chainlet")
+    elif other_allowed == False and aggregated == True:
+        print("Aggregation can not be applied without any other input")
         break
     if train_slide_length<=0:
         print("Train slide length can not be negative or zero")
@@ -394,11 +393,11 @@ for step in parameter_dict:
                     "test_slide_length:", test_slide_length,
                     "priced:", priced,
                     "aggregated:", aggregated,
-                    "chainlet_allowed:", chainlet_allowed,
+                    "other_allowed:", other_allowed,
                     "log_return:", log_return)
                 scaler, input_number, train_input_list, train_target_list, test_input_list, test_target_list, train_year_list, test_year_list, train_list_days, test_list_days = initialize_setting(
-                    window, horizon, priced, aggregated, chainlet_allowed, log_return, train_slide_length, test_slide_length)
-                run_print_model(scaler, input_number, log_return, train_input_list, train_target_list, test_input_list, test_target_list, test_year_list, test_list_days)
+                    window, horizon, priced, aggregated, other_allowed, log_return, train_slide_length, test_slide_length, bitcoin_price_file, daily_file_path)
+                run_print_model(scaler, input_number, log_return, train_input_list, train_target_list, test_input_list, test_target_list, test_year_list, test_list_days, result_file)
             else:
                 print("Sum of horizon and window is bigger than train slide length")
                 print('window: ', window,
