@@ -16,20 +16,22 @@ object ChainSplitterByTimePeriod {
   def main(args: Array[String]): Unit = {
     val coins = List("Bitcoin", "Litecoin", "Namecoin")
     for (coin <- coins) {
+      log.info(coin+" is processed")
       splitData(coin)
     }
   }
 
   def splitData(coin: String): Unit = {
     val rootDir: String = "D:\\" + coin + "/createddata/"
-    val dayF = true
+    val dayF = false
     val outputDir = rootDir + {
       if (dayF) "daily/" else "hourly/"
     }
+    log.info(outputDir+" is the output folder")
     val file: File = new File(outputDir)
     file.mkdirs()
     FileUtils.cleanDirectory(file)
-
+    log.info(outputDir+" cleaned")
     val br = Source.fromFile(rootDir + "txAll.txt").getLines()
     val content = new ListBuffer[String]()
     var previousFile = "";
