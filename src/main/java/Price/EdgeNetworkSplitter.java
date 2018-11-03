@@ -1,3 +1,5 @@
+package Price;
+
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 

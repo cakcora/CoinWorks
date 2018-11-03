@@ -1,3 +1,5 @@
+package Price;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.joda.time.DateTime;
@@ -87,6 +89,7 @@ public class FeatureExtractor {
             }
         }
     }
+
     private static void splitFiles(int refYear) throws Exception {
 
 

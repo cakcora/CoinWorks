@@ -1,3 +1,5 @@
+package Price;
+
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -14,7 +16,7 @@ public class ChainletGraph {
     static int timePeriodMax = 366;
 
     public static void main(String[] args) throws Exception {
-        String[] coins = {("Bitcoin")};//, ("Namecoin"), ("Litecoin")};
+        String[] coins = {("Namecoin")};//, ("Namecoin"), ("Litecoin")};
         for (String coin : coins) {
             getmatrix(coin);
         }
@@ -22,7 +24,7 @@ public class ChainletGraph {
 
     private static void getmatrix(String coin) throws Exception {
         String dir = "D:\\" + coin + "/createddata/daily/";
-        String chDir = "D:\\" + coin + "/createddata/ChainletGraph/";
+        String chDir = "D:\\" + coin + "/createddata/Price.ChainletGraph/";
 
 
         File d1 = new File(chDir);
@@ -32,7 +34,7 @@ public class ChainletGraph {
 
         long max = 0000;
 
-        for (int year = 2016; year <= 2017; year++) {
+        for (int year = 2010; year <= 2017; year++) {
 
             for (int timePeriod = 1; timePeriod <= timePeriodMax; timePeriod++) {
                 int dim = 20;

@@ -1,3 +1,5 @@
+package Price;
+
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.Pair;
 
@@ -8,7 +10,7 @@ import java.util.HashSet;
 /**
  * Created by cxa123230 on 10/24/2017.
  * <p>
- * requires data from @BackwardBranchExtractor.java
+ * requires data from @Price.BackwardBranchExtractor.java
  */
 public class GraphCreator {
     public static void main(String[] args) throws IOException {

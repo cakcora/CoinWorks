@@ -1,3 +1,5 @@
+package Price;
+
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BlockFileLoader;
@@ -17,16 +19,18 @@ import java.util.List;
 
 public class ChainParser {
     private static final Logger log = LoggerFactory.getLogger(ChainParser.class);
+
     public static void main(String [] args) throws IOException {
 
-        String blockDir = "D:\\Bitcoin\\blocks\\";
+        String blockDir = args[0];
         Context.getOrCreate(MainNetParams.get());
         NetworkParameters np = new MainNetParams();
         int j=0;
-        String inputDir = "D:\\Bitcoin\\createddata\\";
-        BufferedWriter wrO = new BufferedWriter(new FileWriter(inputDir + "txOutputSumsOrdered.txt"));
-        BufferedWriter wrI = new BufferedWriter(new FileWriter(inputDir + "txinputsOrdered.txt"));
-        for (int i = 973; i < 5000; i++) {
+        log.info(args[0]);
+        String inputDir = args[1];
+        String newInput = args[2];
+        BufferedWriter fileWriter = new BufferedWriter(new FileWriter(inputDir + newInput));
+        for (int i = 25; i < 5000; i++) {
             String fName ="";
             if (i < 10) fName = "0000";
             else if (i < 100) fName = "000";
@@ -44,14 +48,17 @@ public class ChainParser {
                         StringBuffer oBuffer = new StringBuffer();
                         StringBuffer iBuffer = new StringBuffer();
                         if (++j % 10000 == 0) System.out.println(j);
+                        System.out.println(block.toString());
                         for (Transaction tx : block.getTransactions()) {
-
                             try {
                                 if (!tx.isCoinBase()) {
+
                                     iBuffer.append(block.getTimeSeconds() + "\t" + tx.getHashAsString());
                                     for (long in = 0; in < tx.getInputs().size(); in++) {
                                         TransactionInput ti = tx.getInput(in);
+
                                         TransactionOutPoint outpoint = ti.getOutpoint();
+
                                         long parentOutputIndex = outpoint.getIndex();
                                         iBuffer.append("\t" + outpoint.getHash().toString() + "\t" + parentOutputIndex);
                                     }
@@ -78,10 +85,8 @@ public class ChainParser {
                                 iBuffer.append("\r\n");
                             }
                         }
-                        wrO.write(oBuffer.toString());
-                        wrI.write(iBuffer.toString());
-                        wrI.flush();
-                        wrO.flush();
+                        fileWriter.write(iBuffer.toString());
+                        fileWriter.flush();
                     }
                 } catch (Exception re) {
                     System.out.println(" Failed block.");
@@ -90,11 +95,9 @@ public class ChainParser {
                 }
             }
         }
-        wrO.close();
-        wrI.close();
+        fileWriter.close();
 
     }
-
 
 
 }

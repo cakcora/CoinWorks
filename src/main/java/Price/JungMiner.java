@@ -1,3 +1,5 @@
+package Price;
+
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseGraph;
 import org.joda.time.DateTime;
@@ -16,10 +18,8 @@ public class JungMiner {
     public static void main(String [] args) throws Exception {
         String dir = "C:\\Projects\\Coin\\bitcoin_dataset\\";
         String crdir = dir+"createddata\\";
-        for (int year = 2011; year < 2015; year++)
-        {
-            for (int week = 1; week <= 52; week++)
-            {
+        for (int year = 2011; year < 2015; year++) {
+            for (int week = 1; week <= 52; week++) {
 //                int year=2011;
 //                int month = 11;
                 int dim = 20;
@@ -61,8 +61,8 @@ public class JungMiner {
                 }
                 System.out.println(year+" "+week+" "+sIn + " " + sOut+" "+sSec+" Merge:"+merge+ " Split:"+split+" Transition:"+transition);
                 if(merge+split+transition>0){
-                writeMatrix(year,week,occM,crdir,"occ");
-                writeMatrix(year,week,sumM,crdir,"sum");
+                    writeMatrix(year,week,occM,crdir,"occ");
+                    writeMatrix(year,week,sumM,crdir,"sum");
                 }
             }
         }
@@ -72,9 +72,9 @@ public class JungMiner {
     private static void writeMatrix(int year, int week, int[][] occ, String dir, String file) throws Exception {
         BufferedWriter wr = new BufferedWriter(new FileWriter(dir+file+year+"week"+week+".csv"));
         StringBuffer bf = new StringBuffer();
-        for(int i=0;i<occ.length;i++){
-            for(int j=0;j<occ.length-1;j++){
-               bf.append(occ[i][j]+",");
+        for(int i=0; i<occ.length; i++){
+            for(int j=0; j<occ.length-1; j++){
+                bf.append(occ[i][j]+",");
             }
             bf.append(occ[i][occ.length-1]);
             bf.append("\r\n");
