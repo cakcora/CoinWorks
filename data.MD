@@ -27,7 +27,7 @@ Unix time of transaction\thash of transaction\thash of first output address\tamo
 
 <img src="https://user-images.githubusercontent.com/6596905/38154759-80cbf57a-3439-11e8-8d84-9706e5825d5c.png" width="50%"/> 
 
-Consider the Bitcoin graph in the figure above, where transactions and addresses are shown with rectangles and circles, respectively. This graph would be given in two files: inputsYear_Month.txt and outputsYear_Month.txt. Files would include these lines:
+Consider the Bitcoin graph in the figure above, where transactions and addresses are shown with rectangles and circles, respectively. This graph would be given in two files: inputsYear_Month.txt and outputsYear_Month.txt. Files would include these lines (note that we list previous (unknown) transactions with t_x* notation (For example t_x1, t_x2 are not shown in the figure below). ):
 
 ```
 -- inputsYear_Month.txt
