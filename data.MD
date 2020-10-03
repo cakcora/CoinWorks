@@ -33,8 +33,8 @@ Consider the Bitcoin graph in the figure above, where transactions and addresses
 -- inputsYear_Month.txt
 UnixTimeOft_1	HashOft_1	HashOft_x1	0	HashOft_x2	8
 UnixTimeOft_2	HashOft_1	HashOft_x3	1	HashOft_x4	3	HashOft_x5	0
-UnixTimeOft_3	HashOft_1	1
-UnixTimeOft_4	HashOft_3	2	HashOft_2	0
+UnixTimeOft_3	HashOft_3 HashOft_1	1
+UnixTimeOft_4	HashOft_4 HashOft_3	2	HashOft_2	0
 ```
 
 ```
